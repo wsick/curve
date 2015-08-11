@@ -1,7 +1,9 @@
 var fs = require('fs'),
+    gulp = require('gulp'),
+    taskListing = require('gulp-task-listing'),
     typings = require('bower-typings'),
     allTypings = typings(),
-    name = 'Path2D',
+    name = 'path2d',
     meta = {
         name: name,
         src: [
@@ -34,6 +36,8 @@ var fs = require('fs'),
             }
         ]
     };
+
+gulp.task('help', taskListing);
 
 fs.readdirSync('./gulp')
     .forEach(function (file) {
