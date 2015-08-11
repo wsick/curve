@@ -2,17 +2,14 @@
 
 namespace path2d {
     Path2DEx.parse = function (d: string): Path2D {
-        var existing: Path2D;
-        if (this instanceof Path2D) {
-            existing = this;
-        } else {
-            existing = new Path2DEx();
-        }
-        doParse(existing, d);
-        return existing;
+        if (this instanceof Path2D)
+            return doParse(this, d);
+        return doParse(new Path2DEx(), d);
     };
 
-    function doParse (path: Path2D, d: string) {
+    function doParse (path: Path2D, d: string): Path2D {
         //TODO: Implement
+
+        return path;
     }
 }
