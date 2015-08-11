@@ -1,0 +1,17 @@
+{
+  "name": "Path2D",
+  "version": "0.1.0",
+  "ignore": [
+    "gulp",
+    "test",
+    "testsite",
+    "typings",
+    "gulpfile.js"
+  ],
+  "dependencies": {
+    "fayde": "~0.16.54"
+  },
+  "devDependencies": {
+    "qunit": "~1.18.0"
+  }
+}

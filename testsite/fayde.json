@@ -1,0 +1,15 @@
+{
+  "libs": {
+    "Path2D": {
+      "exports": "Path2D",
+      "base": "lib/Path2D"
+    }
+  },
+  "themes": {
+    "Path2D": "none"
+  },
+  "debug": {
+    "warnMissingThemes": false,
+    "warnBrokenPath": false
+  }
+}
