@@ -5,6 +5,23 @@ var path2d;
 var path2d;
 (function (path2d) {
     var proto = CanvasRenderingContext2D.prototype;
+    if (typeof proto.drawPath !== "function") {
+        proto.drawPath = function (path) {
+            this.beginPath();
+            for (var i = 0, ops = path.$ops, len = ops.length; i < len; i++) {
+                var op = ops[i];
+                var name_1 = path2d.PathOpType[op.type];
+                var func = CanvasRenderingContext2D.prototype[name_1];
+                if (!func)
+                    throw new Error("Invalid path operation type. [" + op.type + "]");
+                func.apply(this, op.args);
+            }
+        };
+    }
+})(path2d || (path2d = {}));
+var path2d;
+(function (path2d) {
+    var proto = CanvasRenderingContext2D.prototype;
     if (!proto.ellipse) {
         proto.ellipse = function (x, y, radiusX, radiusY, rotation, startAngle, endAngle, antiClockwise) {
             this.save();
@@ -18,18 +35,52 @@ var path2d;
 })(path2d || (path2d = {}));
 var path2d;
 (function (path2d) {
-    (function (IPathOpType) {
-        IPathOpType[IPathOpType["closePath"] = 0] = "closePath";
-        IPathOpType[IPathOpType["moveTo"] = 1] = "moveTo";
-        IPathOpType[IPathOpType["lineTo"] = 2] = "lineTo";
-        IPathOpType[IPathOpType["bezierCurveTo"] = 3] = "bezierCurveTo";
-        IPathOpType[IPathOpType["quadraticCurveTo"] = 4] = "quadraticCurveTo";
-        IPathOpType[IPathOpType["arc"] = 5] = "arc";
-        IPathOpType[IPathOpType["arcTo"] = 6] = "arcTo";
-        IPathOpType[IPathOpType["ellipse"] = 7] = "ellipse";
-        IPathOpType[IPathOpType["rect"] = 8] = "rect";
-    })(path2d.IPathOpType || (path2d.IPathOpType = {}));
-    var IPathOpType = path2d.IPathOpType;
+    var proto = CanvasRenderingContext2D.prototype;
+    var _fill = proto.fill;
+    proto.fill = function (arg) {
+        if (arg instanceof Path2D) {
+            this.drawPath(arg);
+            _fill.apply(this, Array.prototype.slice.call(arguments, 1));
+        }
+        else {
+            _fill.apply(this, arguments);
+        }
+    };
+    var _stroke = proto.stroke;
+    proto.stroke = function (arg) {
+        if (arg instanceof Path2D) {
+            this.drawPath(arg);
+            _stroke.call(this);
+        }
+        else {
+            _stroke.call(this);
+        }
+    };
+    var _clip = proto.clip;
+    proto.clip = function (arg) {
+        if (arg instanceof Path2D) {
+            this.drawPath(arg);
+            _clip.apply(this, Array.prototype.slice.call(arguments, 1));
+        }
+        else {
+            _clip.apply(this, arguments);
+        }
+    };
+})(path2d || (path2d = {}));
+var path2d;
+(function (path2d) {
+    (function (PathOpType) {
+        PathOpType[PathOpType["closePath"] = 0] = "closePath";
+        PathOpType[PathOpType["moveTo"] = 1] = "moveTo";
+        PathOpType[PathOpType["lineTo"] = 2] = "lineTo";
+        PathOpType[PathOpType["bezierCurveTo"] = 3] = "bezierCurveTo";
+        PathOpType[PathOpType["quadraticCurveTo"] = 4] = "quadraticCurveTo";
+        PathOpType[PathOpType["arc"] = 5] = "arc";
+        PathOpType[PathOpType["arcTo"] = 6] = "arcTo";
+        PathOpType[PathOpType["ellipse"] = 7] = "ellipse";
+        PathOpType[PathOpType["rect"] = 8] = "rect";
+    })(path2d.PathOpType || (path2d.PathOpType = {}));
+    var PathOpType = path2d.PathOpType;
     var Path2DEx = (function () {
         function Path2DEx(arg0) {
             if (arg0 instanceof Path2D) {
@@ -47,55 +98,55 @@ var path2d;
         };
         Path2DEx.prototype.closePath = function () {
             this.$ops.push({
-                type: IPathOpType.closePath,
+                type: PathOpType.closePath,
                 args: Array.prototype.slice.call(arguments, 0)
             });
         };
         Path2DEx.prototype.moveTo = function (x, y) {
             this.$ops.push({
-                type: IPathOpType.moveTo,
+                type: PathOpType.moveTo,
                 args: Array.prototype.slice.call(arguments, 0)
             });
         };
         Path2DEx.prototype.lineTo = function (x, y) {
             this.$ops.push({
-                type: IPathOpType.lineTo,
+                type: PathOpType.lineTo,
                 args: Array.prototype.slice.call(arguments, 0)
             });
         };
         Path2DEx.prototype.bezierCurveTo = function (cp1x, cp1y, cp2x, cp2y, x, y) {
             this.$ops.push({
-                type: IPathOpType.bezierCurveTo,
+                type: PathOpType.bezierCurveTo,
                 args: Array.prototype.slice.call(arguments, 0)
             });
         };
         Path2DEx.prototype.quadraticCurveTo = function (cpx, cpy, x, y) {
             this.$ops.push({
-                type: IPathOpType.quadraticCurveTo,
+                type: PathOpType.quadraticCurveTo,
                 args: Array.prototype.slice.call(arguments, 0)
             });
         };
         Path2DEx.prototype.arc = function (x, y, radius, startAngle, endAngle, anticlockwise) {
             this.$ops.push({
-                type: IPathOpType.arc,
+                type: PathOpType.arc,
                 args: Array.prototype.slice.call(arguments, 0)
             });
         };
         Path2DEx.prototype.arcTo = function (x1, y1, x2, y2, radius) {
             this.$ops.push({
-                type: IPathOpType.arcTo,
+                type: PathOpType.arcTo,
                 args: Array.prototype.slice.call(arguments, 0)
             });
         };
         Path2DEx.prototype.ellipse = function (x, y, radiusX, radiusY, rotation, startAngle, endAngle, anticlockwise) {
             this.$ops.push({
-                type: IPathOpType.ellipse,
+                type: PathOpType.ellipse,
                 args: Array.prototype.slice.call(arguments, 0)
             });
         };
         Path2DEx.prototype.rect = function (x, y, width, height) {
             this.$ops.push({
-                type: IPathOpType.rect,
+                type: PathOpType.rect,
                 args: Array.prototype.slice.call(arguments, 0)
             });
         };
@@ -119,17 +170,13 @@ var path2d;
 var path2d;
 (function (path2d) {
     path2d.Path2DEx.parse = function (d) {
-        var existing;
-        if (this instanceof Path2D) {
-            existing = this;
-        }
-        else {
-            existing = new path2d.Path2DEx();
-        }
-        doParse(existing, d);
-        return existing;
+        if (this instanceof Path2D)
+            return doParse(this, d);
+        return doParse(new path2d.Path2DEx(), d);
     };
     function doParse(path, d) {
+        //TODO: Implement
+        return path;
     }
 })(path2d || (path2d = {}));
 
