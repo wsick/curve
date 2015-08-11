@@ -1,23 +1,5 @@
 {
   "name": "Path2D",
-  "client": {
-    "tests": [
-      {
-        "file": "test/fayde.json",
-        "lib": "test/lib",
-        "exclude": [
-          "qunit"
-        ]
-      },
-      {
-        "file": "testsite/fayde.json",
-        "lib": "testsite/lib",
-        "exclude": [
-          "qunit"
-        ]
-      }
-    ]
-  },
   "type": "lib",
   "dist": "dist/Path2D",
   "library": {

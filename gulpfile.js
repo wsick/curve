@@ -21,18 +21,6 @@ var fs = require('fs'),
                 ].concat(allTypings)
             },
             {
-                name: 'testsite',
-                ignore: 'lib/qunit',
-                port: 8001,
-                symdirs: ['dist', 'src', 'themes'],
-                src: [
-                    'typings/*.d.ts',
-                    'testsite/**/*.ts',
-                    '!testsite/lib/**/*.ts',
-                    'dist/' + name + '.d.ts'
-                ].concat(allTypings)
-            },
-            {
                 name: 'stress',
                 ignore: 'lib/qunit',
                 port: 8002,

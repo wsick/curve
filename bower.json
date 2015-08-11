@@ -8,10 +8,9 @@
     "typings",
     "gulpfile.js"
   ],
-  "dependencies": {
-    "fayde": "~0.16.54"
-  },
   "devDependencies": {
-    "qunit": "~1.18.0"
+    "qunit": "~1.18.0",
+    "requirejs": "~2.1.20",
+    "requirejs-text": "~2.0.14"
   }
 }
