@@ -12,7 +12,7 @@
         return existing;
     };
 
-    function doParse(path: Path2D, d: string) {
+    function doParse (path: Path2D, d: string) {
         //TODO: Implement
     }
 })(Path2DEx);
