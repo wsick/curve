@@ -9,6 +9,16 @@
       "name": "Path2D Parser",
       "test": "tests/media/Path2D",
       "runCount": 1000
+    },
+    {
+      "name": "parseNumber",
+      "test": "tests/parseNumber",
+      "runCount": 10000
+    },
+    {
+      "name": "parseFloat",
+      "test": "tests/parseFloat",
+      "runCount": 10000
     }
   ]
 }
