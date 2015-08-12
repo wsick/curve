@@ -184,6 +184,7 @@ var path2d;
 var path2d;
 (function (path2d) {
     function parseNumber(tracker) {
+        var start = tracker.offset;
         var data = tracker.data;
         var len = data.length;
         if (isNaN(data, tracker.offset)) {
@@ -202,20 +203,16 @@ var path2d;
             tracker.offset += 8;
             return negate ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY;
         }
-        var characteristic = parseInteger(tracker);
+        parseInteger(tracker);
         var cur = data[tracker.offset];
-        var mantissa = 0;
         if (cur === 0x2E) {
             tracker.offset++;
-            mantissa = parseMantissa(tracker);
+            if (!parseMantissa(tracker))
+                throw new Error("Invalid number");
         }
-        else if (cur !== 0x45 && cur !== 0x65) {
-            return negate ? -characteristic : characteristic;
-        }
-        var significand = parseSignificand(tracker);
-        var num = negate ? -characteristic - mantissa : characteristic + mantissa;
-        num = num * Math.pow(10, significand);
-        return num;
+        if (!parseSignificand(tracker))
+            throw new Error("Invalid number");
+        return parseFloat(getSlice(data, start, tracker.offset - start));
     }
     path2d.parseNumber = parseNumber;
     function isNaN(data, i) {
@@ -234,39 +231,39 @@ var path2d;
             && data[i + 7] === 0x79;
     }
     function parseInteger(tracker) {
-        var num = 0;
+        var start = tracker.offset;
         var data = tracker.data;
         var cur;
         while ((cur = data[tracker.offset]) != null && cur >= 0x30 && cur <= 0x39) {
-            num = (num * 10) + (cur - 0x30);
             tracker.offset++;
         }
-        return num;
+        return tracker.offset !== start;
     }
     function parseMantissa(tracker) {
-        var num = 0;
-        var divisor = 10;
+        var start = tracker.offset;
         var data = tracker.data;
         var cur;
         while ((cur = data[tracker.offset]) != null && cur >= 0x30 && cur <= 0x39) {
-            num += ((cur - 0x30) / divisor);
-            divisor *= 10;
             tracker.offset++;
         }
-        return num;
+        return tracker.offset !== start;
     }
     function parseSignificand(tracker) {
         var data = tracker.data;
         if (data[tracker.offset] !== 0x45 && data[tracker.offset] !== 0x65)
-            return 0;
+            return true;
         tracker.offset++;
-        if (data[tracker.offset] === 0x2D) {
+        var cur = data[tracker.offset];
+        if (cur === 0x2D || cur === 0x2B)
             tracker.offset++;
-            return -parseInteger(tracker);
+        return parseInteger(tracker);
+    }
+    function getSlice(data, offset, length) {
+        var buf = new Uint8Array(length);
+        for (var i = 0; i < length; i++) {
+            buf[i] = data[offset + i];
         }
-        else {
-            return parseInteger(tracker);
-        }
+        return String.fromCharCode.apply(null, buf);
     }
 })(path2d || (path2d = {}));
 /// <reference path="Path2DEx" />

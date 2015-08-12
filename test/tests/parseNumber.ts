@@ -44,4 +44,20 @@ export function load() {
         assert.strictEqual(run('1.123456'), 1.123456);
         assert.strictEqual(run('-1.123456'), -1.123456);
     });
+
+    QUnit.test("Scientific Notation", (assert) => {
+        assert.strictEqual(run('1e1'), 10);
+        assert.strictEqual(run('1e+1'), 10);
+        assert.strictEqual(run('1e-1'), 0.1);
+        assert.strictEqual(run('1E1'), 10);
+        assert.strictEqual(run('1E+1'), 10);
+        assert.strictEqual(run('1E-1'), 0.1);
+
+        assert.strictEqual(run('1.2345e1'), 12.345);
+        assert.strictEqual(run('1.2345e+1'), 12.345);
+        assert.strictEqual(run('1.2345e-1'), 0.12345);
+        assert.strictEqual(run('1.2345E1'), 12.345);
+        assert.strictEqual(run('1.2345E+1'), 12.345);
+        assert.strictEqual(run('1.2345E-1'), 0.12345);
+    });
 }

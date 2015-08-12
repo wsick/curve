@@ -1,5 +1,6 @@
 namespace path2d {
     export function parseNumber(tracker: IParseTracker): number {
+        var start = tracker.offset;
         var data = tracker.data;
         var len = data.length;
         //NaN
@@ -24,20 +25,18 @@ namespace path2d {
         }
 
         //(characteristic)[.(mantissa)][Ee[+-](significand)]
-        var characteristic = parseInteger(tracker);
+        parseInteger(tracker);
         var cur = data[tracker.offset];
-        var mantissa = 0;
         if (cur === 0x2E) { // '.'
             tracker.offset++;
-            mantissa = parseMantissa(tracker);
-        } else if (cur !== 0x45 && cur !== 0x65) { // 'E' 'e'
-            return negate ? -characteristic : characteristic;
+            if (!parseMantissa(tracker))
+                throw new Error("Invalid number");
         }
-        var significand = parseSignificand(tracker);
 
-        var num = negate ? -characteristic - mantissa : characteristic + mantissa;
-        num = num * Math.pow(10, significand);
-        return num;
+        if (!parseSignificand(tracker))
+            throw new Error("Invalid number");
+
+        return parseFloat(getSlice(data, start, tracker.offset - start));
     }
 
     function isNaN(data: Uint8Array, i: number): boolean {
@@ -59,41 +58,43 @@ namespace path2d {
             ;
     }
 
-    function parseInteger(tracker: IParseTracker): number {
-        var num = 0;
+    function parseInteger(tracker: IParseTracker): boolean {
+        var start = tracker.offset;
         var data = tracker.data;
         var cur: number;
         while ((cur = data[tracker.offset]) != null && cur >= 0x30 && cur <= 0x39) {
-            num = (num * 10) + (cur - 0x30);
             tracker.offset++;
         }
-        return num;
+        return tracker.offset !== start;
     }
 
-    function parseMantissa(tracker: IParseTracker): number {
-        var num = 0;
-        var divisor = 10;
+    function parseMantissa(tracker: IParseTracker): boolean {
+        var start = tracker.offset;
         var data = tracker.data;
         var cur: number;
         while ((cur = data[tracker.offset]) != null && cur >= 0x30 && cur <= 0x39) {
-            num += ((cur - 0x30) / divisor);
-            divisor *= 10;
             tracker.offset++;
         }
-        return num;
+        return tracker.offset !== start;
     }
 
-    function parseSignificand(tracker: IParseTracker): number {
+    function parseSignificand(tracker: IParseTracker): boolean {
         var data = tracker.data;
         if (data[tracker.offset] !== 0x45 && data[tracker.offset] !== 0x65)
-            return 0;
+            return true;
         tracker.offset++;
 
-        if (data[tracker.offset] === 0x2D) { // '-'
+        var cur = data[tracker.offset];
+        if (cur === 0x2D || cur === 0x2B) // '-' '+'
             tracker.offset++;
-            return -parseInteger(tracker);
-        } else {
-            return parseInteger(tracker);
+        return parseInteger(tracker);
+    }
+
+    function getSlice(data: Uint8Array, offset: number, length: number): string {
+        var buf = new Uint8Array(length);
+        for (var i = 0; i < length; i++) {
+            buf[i] = data[offset + i];
         }
+        return String.fromCharCode.apply(null, buf);
     }
 }
