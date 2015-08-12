@@ -1,7 +1,7 @@
 module runner {
-    var libpath = "lib/Path2D/dist/Path2D";
+    var libpath = "lib/path2d/dist/path2d";
     var testModules = [
-        ".build/tests/test1"
+        ".build/tests/parseNumber"
     ];
     require([libpath], () => {
         require(testModules, (...modules: any[]) => {
