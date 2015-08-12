@@ -259,7 +259,7 @@ var path2d;
         return parseInteger(tracker);
     }
     function getSlice(data, offset, length) {
-        var buf = new Uint8Array(length);
+        var buf = new Array(length);
         for (var i = 0; i < length; i++) {
             buf[i] = data[offset + i];
         }

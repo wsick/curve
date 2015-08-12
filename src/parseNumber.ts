@@ -91,7 +91,7 @@ namespace path2d {
     }
 
     function getSlice(data: Uint8Array, offset: number, length: number): string {
-        var buf = new Uint8Array(length);
+        var buf = new Array(length);
         for (var i = 0; i < length; i++) {
             buf[i] = data[offset + i];
         }
