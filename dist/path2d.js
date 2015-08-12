@@ -206,6 +206,7 @@ var path2d;
         var cur = data[tracker.offset];
         var mantissa = 0;
         if (cur === 0x2E) {
+            tracker.offset++;
             mantissa = parseMantissa(tracker);
         }
         else if (cur !== 0x45 && cur !== 0x65) {
@@ -233,10 +234,26 @@ var path2d;
             && data[i + 7] === 0x79;
     }
     function parseInteger(tracker) {
-        return 0;
+        var num = 0;
+        var data = tracker.data;
+        var cur;
+        while ((cur = data[tracker.offset]) != null && cur >= 0x30 && cur <= 0x39) {
+            num = (num * 10) + (cur - 0x30);
+            tracker.offset++;
+        }
+        return num;
     }
     function parseMantissa(tracker) {
-        return 0;
+        var num = 0;
+        var divisor = 10;
+        var data = tracker.data;
+        var cur;
+        while ((cur = data[tracker.offset]) != null && cur >= 0x30 && cur <= 0x39) {
+            num += ((cur - 0x30) / divisor);
+            divisor *= 10;
+            tracker.offset++;
+        }
+        return num;
     }
     function parseSignificand(tracker) {
         var data = tracker.data;

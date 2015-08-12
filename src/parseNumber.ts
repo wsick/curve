@@ -28,6 +28,7 @@ namespace path2d {
         var cur = data[tracker.offset];
         var mantissa = 0;
         if (cur === 0x2E) { // '.'
+            tracker.offset++;
             mantissa = parseMantissa(tracker);
         } else if (cur !== 0x45 && cur !== 0x65) { // 'E' 'e'
             return negate ? -characteristic : characteristic;
@@ -59,11 +60,27 @@ namespace path2d {
     }
 
     function parseInteger(tracker: IParseTracker): number {
-        return 0;
+        var num = 0;
+        var data = tracker.data;
+        var cur: number;
+        while ((cur = data[tracker.offset]) != null && cur >= 0x30 && cur <= 0x39) {
+            num = (num * 10) + (cur - 0x30);
+            tracker.offset++;
+        }
+        return num;
     }
 
     function parseMantissa(tracker: IParseTracker): number {
-        return 0;
+        var num = 0;
+        var divisor = 10;
+        var data = tracker.data;
+        var cur: number;
+        while ((cur = data[tracker.offset]) != null && cur >= 0x30 && cur <= 0x39) {
+            num += ((cur - 0x30) / divisor);
+            divisor *= 10;
+            tracker.offset++;
+        }
+        return num;
     }
 
     function parseSignificand(tracker: IParseTracker): number {
