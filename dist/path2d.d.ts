@@ -27,6 +27,18 @@ declare var TextEncoder: {
     new (): TextEncoder;
 };
 declare module path2d {
+    class MediaParser {
+        private str;
+        private len;
+        private index;
+        constructor(str: string);
+        ParseDouble(): number;
+        private Match(matchStr);
+        private Advance();
+        private MorePointsAvailable();
+    }
+}
+declare module path2d {
     interface IPathOp {
         type: PathOpType;
         args: any[];

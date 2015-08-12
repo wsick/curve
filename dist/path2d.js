@@ -82,6 +82,99 @@ var path2d;
         return arr;
     };
 })(this);
+// Path Markup Syntax: http://msdn.microsoft.com/en-us/library/cc189041(v=vs.95).aspx
+var path2d;
+(function (path2d) {
+    var MediaParser = (function () {
+        function MediaParser(str) {
+            this.index = 0;
+            this.str = str;
+            this.len = str.length;
+        }
+        MediaParser.prototype.ParseDouble = function () {
+            this.Advance();
+            var isNegative = false;
+            if (this.Match('-')) {
+                isNegative = true;
+                this.index++;
+            }
+            else if (this.Match('+')) {
+                this.index++;
+            }
+            if (this.Match('Infinity')) {
+                this.index += 8;
+                return isNegative ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY;
+            }
+            if (this.Match('NaN'))
+                return NaN;
+            var temp = '';
+            while (this.index < this.len) {
+                var code = this.str.charCodeAt(this.index);
+                var c = this.str[this.index];
+                if (code >= 48 && code <= 57)
+                    temp += c;
+                else if (code === 46)
+                    temp += c;
+                else if (c === 'E' || c === 'e') {
+                    temp += c;
+                    if (this.str[this.index + 1] === '-') {
+                        temp += '-';
+                        this.index++;
+                    }
+                }
+                else
+                    break;
+                this.index++;
+            }
+            if (temp.length === 0)
+                return null;
+            var f = parseFloat(temp);
+            return isNegative ? -f : f;
+        };
+        MediaParser.prototype.Match = function (matchStr) {
+            var c1;
+            var c2;
+            for (var i = 0; i < matchStr.length && (this.index + i) < this.len; i++) {
+                c1 = matchStr.charAt(i);
+                c2 = this.str.charAt(this.index + i);
+                if (c1 !== c2)
+                    return false;
+            }
+            return true;
+        };
+        MediaParser.prototype.Advance = function () {
+            var code;
+            var c;
+            while (this.index < this.len) {
+                code = this.str.charCodeAt(this.index);
+                if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122) || (code >= 48 && code <= 57))
+                    break;
+                c = String.fromCharCode(code);
+                if (c === '.')
+                    break;
+                if (c === '-')
+                    break;
+                if (c === '+')
+                    break;
+                this.index++;
+            }
+        };
+        MediaParser.prototype.MorePointsAvailable = function () {
+            var c;
+            while (this.index < this.len && ((c = this.str.charAt(this.index)) === ',' || c === ' ')) {
+                this.index++;
+            }
+            if (this.index >= this.len)
+                return false;
+            if (c === '.' || c === '-' || c === '+')
+                return true;
+            var code = this.str.charCodeAt(this.index);
+            return code >= 48 && code <= 57;
+        };
+        return MediaParser;
+    })();
+    path2d.MediaParser = MediaParser;
+})(path2d || (path2d = {}));
 var path2d;
 (function (path2d) {
     (function (PathOpType) {

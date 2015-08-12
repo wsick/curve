@@ -16,8 +16,18 @@
       "runCount": 10000
     },
     {
+      "name": "parseNumberPreload",
+      "test": "tests/parseNumberPreload",
+      "runCount": 10000
+    },
+    {
       "name": "parseFloat",
       "test": "tests/parseFloat",
+      "runCount": 10000
+    },
+    {
+      "name": "MediaParser.ParseDouble",
+      "test": "tests/MediaParser",
       "runCount": 10000
     }
   ]
