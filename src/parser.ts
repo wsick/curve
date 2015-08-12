@@ -1,14 +1,5 @@
 /// <reference path="Path2DEx" />
 
-interface TextEncoder {
-    encode(str: string): Uint8Array;
-    encoding: string;
-}
-declare var TextEncoder: {
-    prototype: TextEncoder;
-    new(): TextEncoder;
-};
-
 namespace path2d {
     Path2DEx.parse = function (d: string): Path2D {
         if (this instanceof Path2D)

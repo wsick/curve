@@ -67,6 +67,21 @@ var path2d;
         }
     };
 })(path2d || (path2d = {}));
+(function (global) {
+    if (typeof global.TextEncoder === "function")
+        return;
+    global.TextEncoder = function TextEncoder() {
+    };
+    Object.defineProperty(TextEncoder.prototype, "encoding", { value: 'utf-8', writable: false });
+    TextEncoder.prototype.encode = function encode(str) {
+        var buf = new ArrayBuffer(str.length);
+        var arr = new Uint8Array(buf);
+        for (var i = 0; i < arr.length; i++) {
+            arr[i] = str.charCodeAt(i);
+        }
+        return arr;
+    };
+})(this);
 var path2d;
 (function (path2d) {
     (function (PathOpType) {

@@ -18,6 +18,14 @@ interface CanvasRenderingContext2D {
 }
 declare module path2d {
 }
+interface TextEncoder {
+    encode(str: string): Uint8Array;
+    encoding: string;
+}
+declare var TextEncoder: {
+    prototpye: TextEncoder;
+    new (): TextEncoder;
+};
 declare module path2d {
     interface IPathOp {
         type: PathOpType;
@@ -74,14 +82,6 @@ declare var Path2D: {
 declare module path2d {
     function parseNumber(tracker: IParseTracker): number;
 }
-interface TextEncoder {
-    encode(str: string): Uint8Array;
-    encoding: string;
-}
-declare var TextEncoder: {
-    prototype: TextEncoder;
-    new (): TextEncoder;
-};
 declare module path2d {
     interface IParseTracker {
         data: Uint8Array;
