@@ -82,7 +82,6 @@ var path2d;
         return arr;
     };
 })(this);
-// Path Markup Syntax: http://msdn.microsoft.com/en-us/library/cc189041(v=vs.95).aspx
 var path2d;
 (function (path2d) {
     var MediaParser = (function () {
@@ -177,6 +176,91 @@ var path2d;
 })(path2d || (path2d = {}));
 var path2d;
 (function (path2d) {
+    function parseNumber(tracker) {
+        var start = tracker.offset;
+        var data = tracker.data;
+        var len = data.length;
+        if (isNaN(data, tracker.offset)) {
+            tracker.offset += 3;
+            return NaN;
+        }
+        var negate = false;
+        if (data[tracker.offset] === 0x2D) {
+            negate = true;
+            tracker.offset++;
+        }
+        else if (data[tracker.offset] === 0x2B) {
+            tracker.offset++;
+        }
+        if (isInfinity(data, tracker.offset)) {
+            tracker.offset += 8;
+            return negate ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY;
+        }
+        parseInteger(tracker);
+        var cur = data[tracker.offset];
+        if (cur === 0x2E) {
+            tracker.offset++;
+            if (!parseMantissa(tracker))
+                throw new Error("Invalid number");
+        }
+        if (!parseSignificand(tracker))
+            throw new Error("Invalid number");
+        return parseFloat(getSlice(data, start, tracker.offset - start));
+    }
+    path2d.parseNumber = parseNumber;
+    function isNaN(data, i) {
+        return data[i + 0] === 0x4E
+            && data[i + 1] === 0x61
+            && data[i + 2] === 0x4E;
+    }
+    function isInfinity(data, i) {
+        return data[i + 0] === 0x49
+            && data[i + 1] === 0x6E
+            && data[i + 2] === 0x66
+            && data[i + 3] === 0x69
+            && data[i + 4] === 0x6E
+            && data[i + 5] === 0x69
+            && data[i + 6] === 0x74
+            && data[i + 7] === 0x79;
+    }
+    function parseInteger(tracker) {
+        var start = tracker.offset;
+        var data = tracker.data;
+        var cur;
+        while ((cur = data[tracker.offset]) != null && cur >= 0x30 && cur <= 0x39) {
+            tracker.offset++;
+        }
+        return tracker.offset !== start;
+    }
+    function parseMantissa(tracker) {
+        var start = tracker.offset;
+        var data = tracker.data;
+        var cur;
+        while ((cur = data[tracker.offset]) != null && cur >= 0x30 && cur <= 0x39) {
+            tracker.offset++;
+        }
+        return tracker.offset !== start;
+    }
+    function parseSignificand(tracker) {
+        var data = tracker.data;
+        if (data[tracker.offset] !== 0x45 && data[tracker.offset] !== 0x65)
+            return true;
+        tracker.offset++;
+        var cur = data[tracker.offset];
+        if (cur === 0x2D || cur === 0x2B)
+            tracker.offset++;
+        return parseInteger(tracker);
+    }
+    function getSlice(data, offset, length) {
+        var buf = new Array(length);
+        for (var i = 0; i < length; i++) {
+            buf[i] = data[offset + i];
+        }
+        return String.fromCharCode.apply(null, buf);
+    }
+})(path2d || (path2d = {}));
+var path2d;
+(function (path2d) {
     (function (PathOpType) {
         PathOpType[PathOpType["closePath"] = 0] = "closePath";
         PathOpType[PathOpType["moveTo"] = 1] = "moveTo";
@@ -265,101 +349,6 @@ var path2d;
     })();
     path2d.Path2DEx = Path2DEx;
 })(path2d || (path2d = {}));
-/// <reference path="Path2DEx" />
-(function (global) {
-    if (typeof Path2D === "function") {
-        global.Path2D.parse = global.path2d.Path2DEx.parse;
-    }
-    else {
-        global.Path2D = global.path2d.Path2DEx;
-    }
-})(this);
-var path2d;
-(function (path2d) {
-    function parseNumber(tracker) {
-        var start = tracker.offset;
-        var data = tracker.data;
-        var len = data.length;
-        if (isNaN(data, tracker.offset)) {
-            tracker.offset += 3;
-            return NaN;
-        }
-        var negate = false;
-        if (data[tracker.offset] === 0x2D) {
-            negate = true;
-            tracker.offset++;
-        }
-        else if (data[tracker.offset] === 0x2B) {
-            tracker.offset++;
-        }
-        if (isInfinity(data, tracker.offset)) {
-            tracker.offset += 8;
-            return negate ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY;
-        }
-        parseInteger(tracker);
-        var cur = data[tracker.offset];
-        if (cur === 0x2E) {
-            tracker.offset++;
-            if (!parseMantissa(tracker))
-                throw new Error("Invalid number");
-        }
-        if (!parseSignificand(tracker))
-            throw new Error("Invalid number");
-        return parseFloat(getSlice(data, start, tracker.offset - start));
-    }
-    path2d.parseNumber = parseNumber;
-    function isNaN(data, i) {
-        return data[i + 0] === 0x4E
-            && data[i + 1] === 0x61
-            && data[i + 2] === 0x4E;
-    }
-    function isInfinity(data, i) {
-        return data[i + 0] === 0x49
-            && data[i + 1] === 0x6E
-            && data[i + 2] === 0x66
-            && data[i + 3] === 0x69
-            && data[i + 4] === 0x6E
-            && data[i + 5] === 0x69
-            && data[i + 6] === 0x74
-            && data[i + 7] === 0x79;
-    }
-    function parseInteger(tracker) {
-        var start = tracker.offset;
-        var data = tracker.data;
-        var cur;
-        while ((cur = data[tracker.offset]) != null && cur >= 0x30 && cur <= 0x39) {
-            tracker.offset++;
-        }
-        return tracker.offset !== start;
-    }
-    function parseMantissa(tracker) {
-        var start = tracker.offset;
-        var data = tracker.data;
-        var cur;
-        while ((cur = data[tracker.offset]) != null && cur >= 0x30 && cur <= 0x39) {
-            tracker.offset++;
-        }
-        return tracker.offset !== start;
-    }
-    function parseSignificand(tracker) {
-        var data = tracker.data;
-        if (data[tracker.offset] !== 0x45 && data[tracker.offset] !== 0x65)
-            return true;
-        tracker.offset++;
-        var cur = data[tracker.offset];
-        if (cur === 0x2D || cur === 0x2B)
-            tracker.offset++;
-        return parseInteger(tracker);
-    }
-    function getSlice(data, offset, length) {
-        var buf = new Array(length);
-        for (var i = 0; i < length; i++) {
-            buf[i] = data[offset + i];
-        }
-        return String.fromCharCode.apply(null, buf);
-    }
-})(path2d || (path2d = {}));
-/// <reference path="Path2DEx" />
 var path2d;
 (function (path2d) {
     path2d.Path2DEx.parse = function (d) {
@@ -379,5 +368,13 @@ var path2d;
         }
     }
 })(path2d || (path2d = {}));
+(function (global) {
+    if (typeof Path2D === "function") {
+        global.Path2D.parse = global.path2d.Path2DEx.parse;
+    }
+    else {
+        global.Path2D = global.path2d.Path2DEx;
+    }
+})(this);
 
 //# sourceMappingURL=path2d.js.map
