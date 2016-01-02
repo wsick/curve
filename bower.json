@@ -7,11 +7,28 @@
     "stress",
     "test",
     "typings",
-    "gulpfile.js"
+    "gulpfile.js",
+    "**/.*",
+    "node_modules",
+    "lib",
+    "tests"
   ],
   "devDependencies": {
     "qunit": "~1.20.0",
     "requirejs": "~2.1.20",
     "requirejs-text": "~2.0.14"
-  }
+  },
+  "homepage": "https://github.com/wsick/path2d",
+  "authors": [
+    "Brad Sickles <brad.sickles@gmail.com>"
+  ],
+  "main": "dist/path2d.js",
+  "moduleType": [
+    "globals"
+  ],
+  "keywords": [
+    "Path2D",
+    "canvas"
+  ],
+  "license": "MIT"
 }
