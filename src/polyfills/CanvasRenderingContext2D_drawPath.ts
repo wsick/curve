@@ -1,20 +1,13 @@
 interface CanvasRenderingContext2D {
-    drawPath(path: Path2D);
+    drawPath(path: gfx.IPath);
 }
 
-namespace path2d {
+namespace gfx {
     var proto: CanvasRenderingContext2D = CanvasRenderingContext2D.prototype;
     if (typeof proto.drawPath !== "function") {
-        proto.drawPath = function (path: Path2D) {
+        proto.drawPath = function (path: IPath) {
             this.beginPath();
-            for (var i = 0, ops = (<any>path).$ops, len = ops.length; i < len; i++) {
-                let op = ops[i];
-                let name: string = PathOpType[op.type];
-                let func = CanvasRenderingContext2D.prototype[name];
-                if (!func)
-                    throw new Error(`Invalid path operation type. [${op.type}]`);
-                func.apply(this, op.args);
-            }
+            path.draw(this);
         };
     }
 }
