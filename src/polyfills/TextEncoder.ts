@@ -4,7 +4,7 @@ interface TextEncoder {
 }
 declare var TextEncoder: {
     prototpye: TextEncoder;
-    new():TextEncoder;
+    new(): TextEncoder;
 };
 
 (function (global: any) {

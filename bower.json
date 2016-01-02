@@ -1,10 +1,11 @@
 {
   "name": "path2d",
+  "description": "Path2D Library",
   "version": "0.1.0",
   "ignore": [
     "gulp",
+    "stress",
     "test",
-    "testsite",
     "typings",
     "gulpfile.js"
   ],
