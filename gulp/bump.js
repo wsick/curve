@@ -4,7 +4,7 @@ var gulp = require('gulp'),
 
 module.exports = function (meta) {
     gulp.task('version', function () {
-        versionts.apply();
+        return versionts.apply();
     });
 
     gulp.task('bump', function () {

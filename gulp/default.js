@@ -18,7 +18,7 @@ module.exports = function (meta) {
             tsResult.dts.pipe(gulp.dest('./dist')),
             tsResult.js
                 .pipe(sourcemaps.write('./'))
-                .pipe(gulp.dest('dist'))
+                .pipe(gulp.dest('./dist'))
         ]);
     });
 };
