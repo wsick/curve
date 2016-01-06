@@ -1,13 +1,13 @@
 {
-  "name": "path2d",
+  "name": "gfx",
   "type": "lib",
-  "dist": "dist/path2d",
+  "dist": "dist/gfx",
   "library": {
     "type": "export",
-    "exports": "path2d"
+    "exports": "gfx"
   },
   "themes": "none",
   "typings": [
-    "dist/path2d.d.ts"
+    "dist/gfx.d.ts"
   ]
 }

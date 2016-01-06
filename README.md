@@ -1,2 +1,4 @@
-# Path2D
-Polyfill for Path2D with retrieval information
+# gfx
+
+Extended library for HTML5 Canvas. 
+This library contains (fill and stroke) bounds calculations for drawing a path.

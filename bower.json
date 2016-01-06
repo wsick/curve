@@ -1,6 +1,6 @@
 {
-  "name": "path2d",
-  "description": "Path2D Library",
+  "name": "gfx",
+  "description": "Canvas Graphics Library",
   "version": "0.1.0",
   "ignore": [
     "gulp",
@@ -18,11 +18,11 @@
     "requirejs": "~2.1.20",
     "requirejs-text": "~2.0.14"
   },
-  "homepage": "https://github.com/wsick/path2d",
+  "homepage": "https://github.com/wsick/gfx",
   "authors": [
     "Brad Sickles <brad.sickles@gmail.com>"
   ],
-  "main": "dist/path2d.js",
+  "main": "dist/gfx.js",
   "moduleType": [
     "globals"
   ],
@@ -30,5 +30,8 @@
     "Path2D",
     "canvas"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "la": "~0.1.1"
+  }
 }

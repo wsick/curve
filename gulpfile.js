@@ -3,7 +3,7 @@ var fs = require('fs'),
     taskListing = require('gulp-task-listing'),
     typings = require('bower-typings'),
     allTypings = typings(),
-    name = 'path2d',
+    name = 'gfx',
     meta = {
         name: name,
         src: [
@@ -15,7 +15,7 @@ var fs = require('fs'),
         scaffolds: [
             {
                 name: 'test',
-                symdirs: ['dist', 'src', 'themes'],
+                symdirs: ['dist', 'src'],
                 src: [
                     'typings/*.d.ts',
                     'test/**/*.ts',
