@@ -3,7 +3,7 @@ var fs = require('fs'),
     taskListing = require('gulp-task-listing'),
     typings = require('bower-typings'),
     allTypings = typings(),
-    name = 'gfx',
+    name = 'curve',
     meta = {
         name: name,
         src: [

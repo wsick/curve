@@ -1,13 +1,13 @@
 {
-  "name": "gfx",
+  "name": "curve",
   "type": "lib",
-  "dist": "dist/gfx",
+  "dist": "dist/curve",
   "library": {
     "type": "export",
-    "exports": "gfx"
+    "exports": "curve"
   },
   "themes": "none",
   "typings": [
-    "dist/gfx.d.ts"
+    "dist/curve.d.ts"
   ]
 }

@@ -1,4 +1,4 @@
-namespace gfx {
+namespace curve {
     export interface IStrokeParameters {
         strokeThickness: number;
         strokeDashArray: number[];

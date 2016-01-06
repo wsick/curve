@@ -1,22 +1,22 @@
-declare namespace gfx {
+declare namespace curve {
     var version: string;
 }
 interface CanvasRenderingContext2D {
-    drawPath(path: gfx.IPath): any;
+    drawPath(path: curve.IPath): any;
 }
-declare namespace gfx {
+declare namespace curve {
 }
 interface CanvasRenderingContext2D {
     ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, antiClockwise?: boolean): any;
 }
-declare namespace gfx {
+declare namespace curve {
 }
 interface CanvasRenderingContext2D {
-    fill(path: gfx.Path, fillRule?: string): void;
-    stroke(path: gfx.Path): void;
-    clip(path: gfx.Path, fillRule?: string): void;
+    fill(path: curve.Path, fillRule?: string): void;
+    stroke(path: curve.Path): void;
+    clip(path: curve.Path, fillRule?: string): void;
 }
-declare namespace gfx {
+declare namespace curve {
 }
 interface TextEncoder {
     encode(str: string): Uint8Array;
@@ -26,23 +26,23 @@ declare var TextEncoder: {
     prototpye: TextEncoder;
     new (): TextEncoder;
 };
-declare namespace gfx.ellipticalArc {
+declare namespace curve.ellipticalArc {
     function generate(path: Path, sx: number, sy: number, rx: number, ry: number, rotationAngle: number, isLargeArcFlag: boolean, sweepDirectionFlag: SweepDirection, ex: number, ey: number): void;
 }
-declare namespace gfx.parse {
+declare namespace curve.parse {
     interface IParser {
         parse(path: IPath, data: string | Uint8Array): IPath;
     }
     var style: ParseStyles;
     function getParser(): IParser;
 }
-declare namespace gfx.parse {
+declare namespace curve.parse {
     enum ParseStyles {
         CharMatching = 2,
         Buffer = 1,
     }
 }
-declare namespace gfx.segments {
+declare namespace curve.segments {
     interface IArcMetrics {
         inited: boolean;
         sx: number;
@@ -67,7 +67,7 @@ declare namespace gfx.segments {
         getEndVector(sx: number, sy: number, args: any[], metrics?: any): number[];
     }
 }
-declare namespace gfx.segments {
+declare namespace curve.segments {
     class LineTo implements ISegment {
         draw(ctx: CanvasRenderingContext2D, args: any[]): void;
         extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[]): void;
@@ -76,7 +76,7 @@ declare namespace gfx.segments {
         getEndVector(sx: number, sy: number, args: any[]): number[];
     }
 }
-declare namespace gfx.segments {
+declare namespace curve.segments {
     interface IArcToMetrics {
         inited: boolean;
         sx: number;
@@ -100,7 +100,7 @@ declare namespace gfx.segments {
         getEndVector(sx: number, sy: number, args: any[], metrics?: any): number[];
     }
 }
-declare namespace gfx.segments {
+declare namespace curve.segments {
     class BezierCurveTo implements ISegment {
         draw(ctx: CanvasRenderingContext2D, args: any[]): void;
         extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[]): void;
@@ -109,7 +109,7 @@ declare namespace gfx.segments {
         getEndVector(sx: number, sy: number, args: any[]): number[];
     }
 }
-declare namespace gfx.segments {
+declare namespace curve.segments {
     class ClosePath implements ISegment {
         draw(ctx: CanvasRenderingContext2D, args: any[]): void;
         extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[]): void;
@@ -118,7 +118,7 @@ declare namespace gfx.segments {
         getEndVector(sx: number, sy: number, args: any[]): number[];
     }
 }
-declare namespace gfx.segments {
+declare namespace curve.segments {
     class Ellipse implements ISegment {
         draw(ctx: CanvasRenderingContext2D, args: any[]): void;
         extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[], metrics?: any): void;
@@ -127,7 +127,7 @@ declare namespace gfx.segments {
         getEndVector(sx: number, sy: number, args: any[], metrics?: any): number[];
     }
 }
-declare namespace gfx.segments {
+declare namespace curve.segments {
     class MoveTo implements ISegment {
         draw(ctx: CanvasRenderingContext2D, args: any[]): void;
         extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[]): void;
@@ -136,7 +136,7 @@ declare namespace gfx.segments {
         getEndVector(sx: number, sy: number, args: any[]): number[];
     }
 }
-declare namespace gfx.segments {
+declare namespace curve.segments {
     class QuadraticCurveTo implements ISegment {
         draw(ctx: CanvasRenderingContext2D, args: any[]): void;
         extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[]): void;
@@ -145,7 +145,7 @@ declare namespace gfx.segments {
         getEndVector(sx: number, sy: number, args: any[]): number[];
     }
 }
-declare namespace gfx.segments {
+declare namespace curve.segments {
     class Rect implements ISegment {
         draw(ctx: CanvasRenderingContext2D, args: any[]): void;
         extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[], metrics?: any): void;
@@ -154,7 +154,7 @@ declare namespace gfx.segments {
         getEndVector(sx: number, sy: number, args: any[], metrics?: any): number[];
     }
 }
-declare namespace gfx.segments {
+declare namespace curve.segments {
     interface ISegment {
         draw(ctx: CanvasRenderingContext2D, args: any[]): any;
         extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[], metrics?: any): any;
@@ -164,24 +164,24 @@ declare namespace gfx.segments {
     }
     var all: any[];
 }
-declare namespace gfx.parse.buffer {
+declare namespace curve.parse.buffer {
     interface IParseTracker {
         data: Uint8Array;
         offset: number;
     }
 }
-declare namespace gfx.parse.buffer {
+declare namespace curve.parse.buffer {
     class Parser implements IParser {
         parse(path: IPath, data: string | Uint8Array): IPath;
     }
     function parseNumber(tracker: IParseTracker): number;
 }
-declare namespace gfx.parse.matching {
+declare namespace curve.parse.matching {
     class Parser implements IParser {
         parse(path: IPath, data: string | Uint8Array): IPath;
     }
 }
-declare namespace gfx {
+declare namespace curve {
     enum FillRule {
         EvenOdd = 0,
         NonZero = 1,
@@ -202,7 +202,7 @@ declare namespace gfx {
         Round = 2,
     }
 }
-declare namespace gfx {
+declare namespace curve {
     interface IBoundingBox {
         l: number;
         t: number;
@@ -210,7 +210,7 @@ declare namespace gfx {
         b: number;
     }
 }
-declare namespace gfx {
+declare namespace curve {
     interface IPath {
         fillRule: FillRule;
         addPath(path: Path, transform?: SVGMatrix): any;
@@ -226,7 +226,7 @@ declare namespace gfx {
         draw(ctx: CanvasRenderingContext2D): any;
     }
 }
-declare namespace gfx {
+declare namespace curve {
     interface IStrokeParameters {
         strokeThickness: number;
         strokeDashArray: number[];
@@ -238,7 +238,7 @@ declare namespace gfx {
         strokeStartLineCap: PenLineCap;
     }
 }
-declare namespace gfx {
+declare namespace curve {
     enum PathOpType {
         closePath = 0,
         moveTo = 1,

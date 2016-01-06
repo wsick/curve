@@ -1,4 +1,4 @@
-namespace gfx.parse {
+namespace curve.parse {
     export interface IParser {
         parse(path: IPath, data: string|Uint8Array): IPath;
     }

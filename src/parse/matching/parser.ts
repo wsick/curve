@@ -38,7 +38,7 @@
 //
 //      Find "Z" or "z"? - CloseCommand
 
-namespace gfx.parse.matching {
+namespace curve.parse.matching {
     export class Parser implements IParser {
         parse(path: IPath, data: string|Uint8Array): IPath {
             if (typeof data === "string")

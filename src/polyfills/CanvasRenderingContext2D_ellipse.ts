@@ -2,7 +2,7 @@ interface CanvasRenderingContext2D {
     ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, antiClockwise?: boolean);
 }
 
-namespace gfx {
+namespace curve {
     var proto: CanvasRenderingContext2D = CanvasRenderingContext2D.prototype;
     if (!proto.ellipse) {
         proto.ellipse = function (x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, antiClockwise?: boolean) {

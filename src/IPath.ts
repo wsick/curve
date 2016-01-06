@@ -1,4 +1,4 @@
-namespace gfx {
+namespace curve {
     export interface IPath {
         fillRule: FillRule;
         addPath(path: Path, transform?: SVGMatrix);

@@ -1,4 +1,4 @@
-namespace gfx.segments {
+namespace curve.segments {
     export class QuadraticCurveTo implements ISegment {
         draw(ctx: CanvasRenderingContext2D, args: any[]) {
             var cpx: number = args[0];

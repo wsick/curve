@@ -1,4 +1,4 @@
-namespace gfx.parse.buffer {
+namespace curve.parse.buffer {
     export class Parser implements IParser {
         parse(path: IPath, data: string|Uint8Array): IPath {
             var buffer = toBuffer(data);

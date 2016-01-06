@@ -1,7 +1,7 @@
 /// <reference path="LineTo" />
 /// <reference path="Arc" />
 
-namespace gfx.segments {
+namespace curve.segments {
     export interface IArcToMetrics {
         inited: boolean;
         sx: number;

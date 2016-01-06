@@ -1,4 +1,4 @@
-namespace gfx.segments {
+namespace curve.segments {
     export class ClosePath implements ISegment {
         draw(ctx: CanvasRenderingContext2D, args: any[]) {
             ctx.closePath();

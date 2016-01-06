@@ -1,4 +1,4 @@
-namespace gfx {
+namespace curve {
     interface IPathOp {
         type: PathOpType;
         args: any[];

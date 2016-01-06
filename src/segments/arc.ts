@@ -1,4 +1,4 @@
-namespace gfx.segments {
+namespace curve.segments {
     export interface IArcMetrics {
         inited: boolean;
         sx: number;

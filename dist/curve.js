@@ -1,9 +1,9 @@
-var gfx;
-(function (gfx) {
-    gfx.version = '0.1.0';
-})(gfx || (gfx = {}));
-var gfx;
-(function (gfx) {
+var curve;
+(function (curve) {
+    curve.version = '0.1.0';
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
     var proto = CanvasRenderingContext2D.prototype;
     if (typeof proto.drawPath !== "function") {
         proto.drawPath = function (path) {
@@ -11,9 +11,9 @@ var gfx;
             path.draw(this);
         };
     }
-})(gfx || (gfx = {}));
-var gfx;
-(function (gfx) {
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
     var proto = CanvasRenderingContext2D.prototype;
     if (!proto.ellipse) {
         proto.ellipse = function (x, y, radiusX, radiusY, rotation, startAngle, endAngle, antiClockwise) {
@@ -25,13 +25,13 @@ var gfx;
             this.restore();
         };
     }
-})(gfx || (gfx = {}));
-var gfx;
-(function (gfx) {
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
     var proto = CanvasRenderingContext2D.prototype;
     var _fill = proto.fill;
     proto.fill = function (arg) {
-        if (arg instanceof gfx.Path) {
+        if (arg instanceof curve.Path) {
             this.drawPath(arg);
             _fill.apply(this, Array.prototype.slice.call(arguments, 1));
         }
@@ -41,7 +41,7 @@ var gfx;
     };
     var _stroke = proto.stroke;
     proto.stroke = function (arg) {
-        if (arg instanceof gfx.Path) {
+        if (arg instanceof curve.Path) {
             this.drawPath(arg);
             _stroke.call(this);
         }
@@ -51,7 +51,7 @@ var gfx;
     };
     var _clip = proto.clip;
     proto.clip = function (arg) {
-        if (arg instanceof gfx.Path) {
+        if (arg instanceof curve.Path) {
             this.drawPath(arg);
             _clip.apply(this, Array.prototype.slice.call(arguments, 1));
         }
@@ -59,7 +59,7 @@ var gfx;
             _clip.apply(this, arguments);
         }
     };
-})(gfx || (gfx = {}));
+})(curve || (curve = {}));
 (function (global) {
     if (typeof global.TextEncoder === "function")
         return;
@@ -75,8 +75,8 @@ var gfx;
         return arr;
     };
 })(this);
-var gfx;
-(function (gfx) {
+var curve;
+(function (curve) {
     var ellipticalArc;
     (function (ellipticalArc) {
         var NO_DRAW_EPSILON = 0.000002;
@@ -117,7 +117,7 @@ var gfx;
             var cxp, cyp, cx, cy;
             var c = (rx2 * ry2) - (rx2 * y1p2) - (ry2 * x1p2);
             var large = isLargeArcFlag === true;
-            var sweep = sweepDirectionFlag === gfx.SweepDirection.Clockwise;
+            var sweep = sweepDirectionFlag === curve.SweepDirection.Clockwise;
             if (c < 0.0) {
                 var scale = Math.sqrt(1.0 - c / (rx2 * ry2));
                 rx *= scale;
@@ -180,10 +180,10 @@ var gfx;
             }
         }
         ellipticalArc.generate = generate;
-    })(ellipticalArc = gfx.ellipticalArc || (gfx.ellipticalArc = {}));
-})(gfx || (gfx = {}));
-var gfx;
-(function (gfx) {
+    })(ellipticalArc = curve.ellipticalArc || (curve.ellipticalArc = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
     var parse;
     (function (parse) {
         parse.style = parse.ParseStyles.CharMatching;
@@ -193,10 +193,10 @@ var gfx;
             return new parse.matching.Parser();
         }
         parse.getParser = getParser;
-    })(parse = gfx.parse || (gfx.parse = {}));
-})(gfx || (gfx = {}));
-var gfx;
-(function (gfx) {
+    })(parse = curve.parse || (curve.parse = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
     var parse;
     (function (parse) {
         (function (ParseStyles) {
@@ -204,10 +204,10 @@ var gfx;
             ParseStyles[ParseStyles["Buffer"] = 1] = "Buffer";
         })(parse.ParseStyles || (parse.ParseStyles = {}));
         var ParseStyles = parse.ParseStyles;
-    })(parse = gfx.parse || (gfx.parse = {}));
-})(gfx || (gfx = {}));
-var gfx;
-(function (gfx) {
+    })(parse = curve.parse || (curve.parse = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
     var segments;
     (function (segments) {
         var Arc = (function () {
@@ -345,7 +345,7 @@ var gfx;
         function getCapSpread(x, y, thickness, cap, vector) {
             var hs = thickness / 2.0;
             switch (cap) {
-                case gfx.PenLineCap.Round:
+                case curve.PenLineCap.Round:
                     return {
                         x1: x - hs,
                         x2: x + hs,
@@ -353,7 +353,7 @@ var gfx;
                         y2: y + hs
                     };
                     break;
-                case gfx.PenLineCap.Square:
+                case curve.PenLineCap.Square:
                     var ed = normalizeVector(vector);
                     var edo = perpendicularVector(ed);
                     return {
@@ -363,7 +363,7 @@ var gfx;
                         y2: y + hs * (ed[1] - edo[1])
                     };
                     break;
-                case gfx.PenLineCap.Flat:
+                case curve.PenLineCap.Flat:
                 default:
                     var ed = normalizeVector(vector);
                     var edo = perpendicularVector(ed);
@@ -389,10 +389,10 @@ var gfx;
                 v[0]
             ];
         }
-    })(segments = gfx.segments || (gfx.segments = {}));
-})(gfx || (gfx = {}));
-var gfx;
-(function (gfx) {
+    })(segments = curve.segments || (curve.segments = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
     var segments;
     (function (segments) {
         var LineTo = (function () {
@@ -429,10 +429,10 @@ var gfx;
             return LineTo;
         })();
         segments.LineTo = LineTo;
-    })(segments = gfx.segments || (gfx.segments = {}));
-})(gfx || (gfx = {}));
-var gfx;
-(function (gfx) {
+    })(segments = curve.segments || (curve.segments = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
     var segments;
     (function (segments) {
         var _arc = new segments.Arc();
@@ -531,10 +531,10 @@ var gfx;
             var p2 = la.vec2.orthogonal(la.vec2.create(d2[0], d2[2]));
             return la.vec2.intersection(s1, p1, s2, p2);
         }
-    })(segments = gfx.segments || (gfx.segments = {}));
-})(gfx || (gfx = {}));
-var gfx;
-(function (gfx) {
+    })(segments = curve.segments || (curve.segments = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
     var segments;
     (function (segments) {
         var BezierCurveTo = (function () {
@@ -656,10 +656,10 @@ var gfx;
             }
             return cods;
         }
-    })(segments = gfx.segments || (gfx.segments = {}));
-})(gfx || (gfx = {}));
-var gfx;
-(function (gfx) {
+    })(segments = curve.segments || (curve.segments = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
     var segments;
     (function (segments) {
         var ClosePath = (function () {
@@ -681,10 +681,10 @@ var gfx;
             return ClosePath;
         })();
         segments.ClosePath = ClosePath;
-    })(segments = gfx.segments || (gfx.segments = {}));
-})(gfx || (gfx = {}));
-var gfx;
-(function (gfx) {
+    })(segments = curve.segments || (curve.segments = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
     var segments;
     (function (segments) {
         var Ellipse = (function () {
@@ -743,10 +743,10 @@ var gfx;
             return Ellipse;
         })();
         segments.Ellipse = Ellipse;
-    })(segments = gfx.segments || (gfx.segments = {}));
-})(gfx || (gfx = {}));
-var gfx;
-(function (gfx) {
+    })(segments = curve.segments || (curve.segments = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
     var segments;
     (function (segments) {
         var MoveTo = (function () {
@@ -777,10 +777,10 @@ var gfx;
             return MoveTo;
         })();
         segments.MoveTo = MoveTo;
-    })(segments = gfx.segments || (gfx.segments = {}));
-})(gfx || (gfx = {}));
-var gfx;
-(function (gfx) {
+    })(segments = curve.segments || (curve.segments = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
     var segments;
     (function (segments) {
         var QuadraticCurveTo = (function () {
@@ -865,10 +865,10 @@ var gfx;
                 return null;
             return (a * Math.pow(1 - t, 2)) + (2 * b * (1 - t) * t) + (c * Math.pow(t, 2));
         }
-    })(segments = gfx.segments || (gfx.segments = {}));
-})(gfx || (gfx = {}));
-var gfx;
-(function (gfx) {
+    })(segments = curve.segments || (curve.segments = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
     var segments;
     (function (segments) {
         var Rect = (function () {
@@ -911,26 +911,26 @@ var gfx;
             return Rect;
         })();
         segments.Rect = Rect;
-    })(segments = gfx.segments || (gfx.segments = {}));
-})(gfx || (gfx = {}));
-var gfx;
-(function (gfx) {
+    })(segments = curve.segments || (curve.segments = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
     var segments;
     (function (segments) {
         segments.all = [];
-        segments.all[gfx.PathOpType.closePath] = new segments.ClosePath();
-        segments.all[gfx.PathOpType.moveTo] = new segments.MoveTo();
-        segments.all[gfx.PathOpType.lineTo] = new segments.LineTo();
-        segments.all[gfx.PathOpType.bezierCurveTo] = new segments.BezierCurveTo();
-        segments.all[gfx.PathOpType.quadraticCurveTo] = new segments.QuadraticCurveTo();
-        segments.all[gfx.PathOpType.arc] = new segments.Arc();
-        segments.all[gfx.PathOpType.arcTo] = new segments.ArcTo();
-        segments.all[gfx.PathOpType.ellipse] = new segments.Ellipse();
-        segments.all[gfx.PathOpType.rect] = new segments.Rect();
-    })(segments = gfx.segments || (gfx.segments = {}));
-})(gfx || (gfx = {}));
-var gfx;
-(function (gfx) {
+        segments.all[curve.PathOpType.closePath] = new segments.ClosePath();
+        segments.all[curve.PathOpType.moveTo] = new segments.MoveTo();
+        segments.all[curve.PathOpType.lineTo] = new segments.LineTo();
+        segments.all[curve.PathOpType.bezierCurveTo] = new segments.BezierCurveTo();
+        segments.all[curve.PathOpType.quadraticCurveTo] = new segments.QuadraticCurveTo();
+        segments.all[curve.PathOpType.arc] = new segments.Arc();
+        segments.all[curve.PathOpType.arcTo] = new segments.ArcTo();
+        segments.all[curve.PathOpType.ellipse] = new segments.Ellipse();
+        segments.all[curve.PathOpType.rect] = new segments.Rect();
+    })(segments = curve.segments || (curve.segments = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
     var parse;
     (function (parse) {
         var buffer;
@@ -1034,10 +1034,10 @@ var gfx;
                 return String.fromCharCode.apply(null, buf);
             }
         })(buffer = parse.buffer || (parse.buffer = {}));
-    })(parse = gfx.parse || (gfx.parse = {}));
-})(gfx || (gfx = {}));
-var gfx;
-(function (gfx) {
+    })(parse = curve.parse || (curve.parse = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
     var parse;
     (function (parse_1) {
         var matching;
@@ -1056,9 +1056,9 @@ var gfx;
             matching.Parser = Parser;
             function parse(path, str, len) {
                 var index = 0;
-                var fillRule = gfx.FillRule.EvenOdd;
+                var fillRule = curve.FillRule.EvenOdd;
                 go();
-                path.fillRule = fillRule || gfx.FillRule.EvenOdd;
+                path.fillRule = fillRule || curve.FillRule.EvenOdd;
                 function go() {
                     var cp = { x: 0, y: 0 };
                     var cp1, cp2, cp3;
@@ -1079,9 +1079,9 @@ var gfx;
                             case 'F':
                                 c = str.charAt(index);
                                 if (c === '0')
-                                    fillRule = gfx.FillRule.EvenOdd;
+                                    fillRule = curve.FillRule.EvenOdd;
                                 else if (c === '1')
-                                    fillRule = gfx.FillRule.NonZero;
+                                    fillRule = curve.FillRule.NonZero;
                                 else
                                     return null;
                                 index++;
@@ -1285,9 +1285,9 @@ var gfx;
                                         break;
                                     var angle = parseDouble();
                                     var is_large = parseDouble() !== 0;
-                                    var sweep = gfx.SweepDirection.Counterclockwise;
+                                    var sweep = curve.SweepDirection.Counterclockwise;
                                     if (parseDouble() !== 0)
-                                        sweep = gfx.SweepDirection.Clockwise;
+                                        sweep = curve.SweepDirection.Clockwise;
                                     if ((cp2 = parsePoint()) == null)
                                         break;
                                     if (relative) {
@@ -1410,36 +1410,36 @@ var gfx;
                 }
             }
         })(matching = parse_1.matching || (parse_1.matching = {}));
-    })(parse = gfx.parse || (gfx.parse = {}));
-})(gfx || (gfx = {}));
-var gfx;
-(function (gfx) {
+    })(parse = curve.parse || (curve.parse = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
     (function (FillRule) {
         FillRule[FillRule["EvenOdd"] = 0] = "EvenOdd";
         FillRule[FillRule["NonZero"] = 1] = "NonZero";
-    })(gfx.FillRule || (gfx.FillRule = {}));
-    var FillRule = gfx.FillRule;
+    })(curve.FillRule || (curve.FillRule = {}));
+    var FillRule = curve.FillRule;
     (function (SweepDirection) {
         SweepDirection[SweepDirection["Counterclockwise"] = 0] = "Counterclockwise";
         SweepDirection[SweepDirection["Clockwise"] = 1] = "Clockwise";
-    })(gfx.SweepDirection || (gfx.SweepDirection = {}));
-    var SweepDirection = gfx.SweepDirection;
+    })(curve.SweepDirection || (curve.SweepDirection = {}));
+    var SweepDirection = curve.SweepDirection;
     (function (PenLineCap) {
         PenLineCap[PenLineCap["Flat"] = 0] = "Flat";
         PenLineCap[PenLineCap["Square"] = 1] = "Square";
         PenLineCap[PenLineCap["Round"] = 2] = "Round";
         PenLineCap[PenLineCap["Triangle"] = 3] = "Triangle";
-    })(gfx.PenLineCap || (gfx.PenLineCap = {}));
-    var PenLineCap = gfx.PenLineCap;
+    })(curve.PenLineCap || (curve.PenLineCap = {}));
+    var PenLineCap = curve.PenLineCap;
     (function (PenLineJoin) {
         PenLineJoin[PenLineJoin["Miter"] = 0] = "Miter";
         PenLineJoin[PenLineJoin["Bevel"] = 1] = "Bevel";
         PenLineJoin[PenLineJoin["Round"] = 2] = "Round";
-    })(gfx.PenLineJoin || (gfx.PenLineJoin = {}));
-    var PenLineJoin = gfx.PenLineJoin;
-})(gfx || (gfx = {}));
-var gfx;
-(function (gfx) {
+    })(curve.PenLineJoin || (curve.PenLineJoin = {}));
+    var PenLineJoin = curve.PenLineJoin;
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
     (function (PathOpType) {
         PathOpType[PathOpType["closePath"] = 0] = "closePath";
         PathOpType[PathOpType["moveTo"] = 1] = "moveTo";
@@ -1450,8 +1450,8 @@ var gfx;
         PathOpType[PathOpType["arcTo"] = 6] = "arcTo";
         PathOpType[PathOpType["ellipse"] = 7] = "ellipse";
         PathOpType[PathOpType["rect"] = 8] = "rect";
-    })(gfx.PathOpType || (gfx.PathOpType = {}));
-    var PathOpType = gfx.PathOpType;
+    })(curve.PathOpType || (curve.PathOpType = {}));
+    var PathOpType = curve.PathOpType;
     var Path = (function () {
         function Path(arg0) {
             if (arg0 instanceof Path) {
@@ -1535,14 +1535,14 @@ var gfx;
             }
         };
         Path.parse = function (d) {
-            var parser = gfx.parse.getParser();
+            var parser = curve.parse.getParser();
             var _this = this;
             var inst = _this instanceof Path ? _this : new Path();
             return parser.parse(inst, d);
         };
         return Path;
     })();
-    gfx.Path = Path;
-})(gfx || (gfx = {}));
+    curve.Path = Path;
+})(curve || (curve = {}));
 
-//# sourceMappingURL=gfx.js.map
+//# sourceMappingURL=curve.js.map

@@ -1,4 +1,4 @@
-namespace gfx.segments {
+namespace curve.segments {
     export class BezierCurveTo implements ISegment {
         draw(ctx: CanvasRenderingContext2D, args: any[]) {
             var cp1x: number = args[0];

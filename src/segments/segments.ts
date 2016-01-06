@@ -8,7 +8,7 @@
 /// <reference path="Ellipse" />
 /// <reference path="Rect" />
 
-namespace gfx.segments {
+namespace curve.segments {
     export interface ISegment {
         draw(ctx: CanvasRenderingContext2D, args: any[]);
         extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[], metrics?: any);

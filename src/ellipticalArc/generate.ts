@@ -1,4 +1,4 @@
-namespace gfx.ellipticalArc {
+namespace curve.ellipticalArc {
     var NO_DRAW_EPSILON = 0.000002;
     var ZERO_EPSILON = 0.000019;
     var SMALL_EPSILON = 0.000117;

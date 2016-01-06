@@ -1,8 +1,8 @@
 interface CanvasRenderingContext2D {
-    drawPath(path: gfx.IPath);
+    drawPath(path: curve.IPath);
 }
 
-namespace gfx {
+namespace curve {
     var proto: CanvasRenderingContext2D = CanvasRenderingContext2D.prototype;
     if (typeof proto.drawPath !== "function") {
         proto.drawPath = function (path: IPath) {

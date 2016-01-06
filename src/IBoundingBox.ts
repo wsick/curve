@@ -1,4 +1,4 @@
-namespace gfx {
+namespace curve {
     export interface IBoundingBox {
         l: number;
         t: number;

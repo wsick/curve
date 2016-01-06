@@ -1,5 +1,5 @@
 {
-  "name": "gfx",
+  "name": "curve",
   "description": "Canvas Graphics Library",
   "version": "0.1.0",
   "ignore": [
@@ -18,11 +18,11 @@
     "requirejs": "~2.1.20",
     "requirejs-text": "~2.0.14"
   },
-  "homepage": "https://github.com/wsick/gfx",
+  "homepage": "https://github.com/wsick/curve",
   "authors": [
     "Brad Sickles <brad.sickles@gmail.com>"
   ],
-  "main": "dist/gfx.js",
+  "main": "dist/curve.js",
   "moduleType": [
     "globals"
   ],

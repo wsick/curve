@@ -1,4 +1,4 @@
-namespace gfx.segments {
+namespace curve.segments {
     export class LineTo implements ISegment {
         draw(ctx: CanvasRenderingContext2D, args: any[]) {
             var x = args[0];

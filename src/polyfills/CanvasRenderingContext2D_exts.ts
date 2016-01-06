@@ -1,10 +1,10 @@
 interface CanvasRenderingContext2D {
-    fill(path: gfx.Path, fillRule?: string): void;
-    stroke(path: gfx.Path): void;
-    clip(path: gfx.Path, fillRule?: string): void;
+    fill(path: curve.Path, fillRule?: string): void;
+    stroke(path: curve.Path): void;
+    clip(path: curve.Path, fillRule?: string): void;
 }
 
-namespace gfx {
+namespace curve {
     var proto: CanvasRenderingContext2D = CanvasRenderingContext2D.prototype;
 
     var _fill = proto.fill;

@@ -1,4 +1,4 @@
-namespace gfx {
+namespace curve {
     export enum FillRule {
         EvenOdd = 0,
         NonZero = 1
