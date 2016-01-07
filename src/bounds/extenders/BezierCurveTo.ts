@@ -1,16 +1,25 @@
-namespace curve.segments {
-    export class BezierCurveTo implements ISegment {
-        draw(ctx: CanvasRenderingContext2D, args: any[]) {
+namespace curve.bounds.extenders {
+    import vec2 = la.vec2;
+
+    export class BezierCurveTo implements IBoundsExtender {
+        isMove = false;
+
+        init(sx: number, sy: number, args: any[]): ISegmentMetrics {
             var cp1x: number = args[0];
             var cp1y: number = args[1];
             var cp2x: number = args[2];
             var cp2y: number = args[3];
             var x: number = args[4];
             var y: number = args[5];
-            ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y);
+
+            return {
+                endPoint: vec2.create(x, y),
+                startVector: vec2.create(3 * (cp1x - sx), 3 * (cp1y - sy)), // [F(0)'x, F(0)'y]
+                endVector: vec2.create(3 * (x - cp2x), 3 * (y - cp2y))      // [F(1)'x, F(1)'y]
+            };
         }
 
-        extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[]) {
+        extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[], metrics: ISegmentMetrics) {
             var cp1x: number = args[0];
             var cp1y: number = args[1];
             var cp2x: number = args[2];
@@ -42,7 +51,7 @@ namespace curve.segments {
             box.b = Math.max(box.b, y);
         }
 
-        extendStrokeBox(box: IBoundingBox, sx: number, sy: number, args: any[], pars: IStrokeParameters) {
+        extendStrokeBox(box: IBoundingBox, sx: number, sy: number, args: any[], metrics: ISegmentMetrics, pars: IStrokeParameters) {
             var cp1x: number = args[0];
             var cp1y: number = args[1];
             var cp2x: number = args[2];
@@ -73,28 +82,6 @@ namespace curve.segments {
             box.r = Math.max(box.r, x);
             box.t = Math.min(box.t, y);
             box.b = Math.max(box.b, y);
-        }
-
-        getStartVector(sx: number, sy: number, args: any[]): number[] {
-            var cp1x: number = args[0];
-            var cp1y: number = args[1];
-            //[F(0)'x, F(0)'y]
-            return [
-                3 * (cp1x - sx),
-                3 * (cp1y - sy)
-            ];
-        }
-
-        getEndVector(sx: number, sy: number, args: any[]): number[] {
-            var cp2x: number = args[2];
-            var cp2y: number = args[3];
-            var x: number = args[4];
-            var y: number = args[5];
-            //[F(1)'x, F(1)'y]
-            return [
-                3 * (x - cp2x),
-                3 * (y - cp2y)
-            ];
         }
     }
 

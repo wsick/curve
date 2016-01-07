@@ -1,6 +1,6 @@
 namespace curve.parse.buffer {
     export class Parser implements IParser {
-        parse(path: IPath, data: string|Uint8Array): IPath {
+        parse(runner: ISegmentRunner, data: string|Uint8Array) {
             var buffer = toBuffer(data);
             //TODO: Implement
             return undefined;

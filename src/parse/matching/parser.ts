@@ -40,11 +40,11 @@
 
 namespace curve.parse.matching {
     export class Parser implements IParser {
-        parse(path: IPath, data: string|Uint8Array): IPath {
+        parse(runner: ISegmentRunner, data: string|Uint8Array) {
             if (typeof data === "string")
-                parse(path, data, data.length);
-            console.warn("Input parse data was not a string.", data);
-            return path;
+                parse(runner, data, data.length);
+            else
+                console.warn("Input parse data was not a string.", data);
         }
     }
 
@@ -53,11 +53,9 @@ namespace curve.parse.matching {
         y: number;
     }
 
-    function parse(path: IPath, str: string, len: number) {
+    function parse(runner: ISegmentRunner, str: string, len: number) {
         var index = 0;
-        var fillRule = FillRule.EvenOdd;
         go();
-        path.fillRule = fillRule || FillRule.EvenOdd;
 
         function go() {
             var cp = {x: 0, y: 0};
@@ -80,9 +78,9 @@ namespace curve.parse.matching {
                     case 'F':
                         c = str.charAt(index);
                         if (c === '0')
-                            fillRule = FillRule.EvenOdd;
+                            runner.setFillRule(FillRule.EvenOdd);
                         else if (c === '1')
-                            fillRule = FillRule.NonZero;
+                            runner.setFillRule(FillRule.NonZero);
                         else
                             return null;
                         index++;
@@ -98,7 +96,7 @@ namespace curve.parse.matching {
                             cp1.x += cp.x;
                             cp1.y += cp.y;
                         }
-                        path.moveTo(cp1.x, cp1.y);
+                        runner.moveTo(cp1.x, cp1.y);
                         start.x = cp.x = cp1.x;
                         start.y = cp.y = cp1.y;
                         advance();
@@ -109,7 +107,7 @@ namespace curve.parse.matching {
                                 cp1.x += cp.x;
                                 cp1.y += cp.y;
                             }
-                            path.lineTo(cp1.x, cp1.y);
+                            runner.lineTo(cp1.x, cp1.y);
                         }
                         cp.x = cp1.x;
                         cp.y = cp1.y;
@@ -127,7 +125,7 @@ namespace curve.parse.matching {
                                 cp1.y += cp.y;
                             }
 
-                            path.lineTo(cp1.x, cp1.y);
+                            runner.lineTo(cp1.x, cp1.y);
 
                             cp.x = cp1.x;
                             cp.y = cp1.y;
@@ -146,7 +144,7 @@ namespace curve.parse.matching {
                             x += cp.x;
                         cp = {x: x, y: cp.y};
 
-                        path.lineTo(cp.x, cp.y);
+                        runner.lineTo(cp.x, cp.y);
                         cbz = qbz = false;
                         break;
                     case 'v':
@@ -160,7 +158,7 @@ namespace curve.parse.matching {
                             y += cp.y;
                         cp = {x: cp.x, y: y};
 
-                        path.lineTo(cp.x, cp.y);
+                        runner.lineTo(cp.x, cp.y);
                         cbz = qbz = false;
                         break;
                     case 'c':
@@ -189,7 +187,7 @@ namespace curve.parse.matching {
                             }
                             advance();
 
-                            path.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, cp3.x, cp3.y);
+                            runner.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, cp3.x, cp3.y);
 
                             cp1.x = cp3.x;
                             cp1.y = cp3.y;
@@ -225,7 +223,7 @@ namespace curve.parse.matching {
                             } else
                                 cp1 = cp;
 
-                            path.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, cp3.x, cp3.y);
+                            runner.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, cp3.x, cp3.y);
 
                             cbz = true;
                             cbzp.x = cp2.x;
@@ -257,7 +255,7 @@ namespace curve.parse.matching {
                             }
                             advance();
 
-                            path.quadraticCurveTo(cp1.x, cp1.y, cp2.x, cp2.y);
+                            runner.quadraticCurveTo(cp1.x, cp1.y, cp2.x, cp2.y);
 
                             cp.x = cp2.x;
                             cp.y = cp2.y;
@@ -284,7 +282,7 @@ namespace curve.parse.matching {
                             } else
                                 cp1 = cp;
 
-                            path.quadraticCurveTo(cp1.x, cp1.y, cp2.x, cp2.y);
+                            runner.quadraticCurveTo(cp1.x, cp1.y, cp2.x, cp2.y);
 
                             qbz = true;
                             qbzp.x = cp1.x;
@@ -305,7 +303,7 @@ namespace curve.parse.matching {
                                 break;
 
                             var angle = parseDouble();
-                            var is_large = parseDouble() !== 0;
+                            var is_large = parseDouble() !== 0 ? 1 : 0;
                             var sweep = SweepDirection.Counterclockwise;
                             if (parseDouble() !== 0) sweep = SweepDirection.Clockwise;
 
@@ -316,8 +314,8 @@ namespace curve.parse.matching {
                                 cp2.y += cp.y;
                             }
 
-                            console.warn("ellipticalArc not implemented");
-                            //path.ellipticalArc(cp1.x, cp1.y, angle, is_large, sweep, cp2.x, cp2.y);
+                            var phi = angle * Math.PI / 180.0;
+                            ellipticalArc.genEllipse(runner, cp.x, cp.y, cp2.x, cp2.y, is_large, sweep, phi, cp1.x, cp1.y);
 
                             cp.x = cp2.x;
                             cp.y = cp2.y;
@@ -328,7 +326,7 @@ namespace curve.parse.matching {
                         break;
                     case 'z':
                     case 'Z':
-                        path.closePath();
+                        runner.closePath();
 
                         cp.x = start.x;
                         cp.y = start.y;

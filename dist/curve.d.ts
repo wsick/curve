@@ -2,19 +2,9 @@ declare namespace curve {
     var version: string;
 }
 interface CanvasRenderingContext2D {
-    drawPath(path: curve.IPath): any;
-}
-declare namespace curve {
-}
-interface CanvasRenderingContext2D {
     ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, antiClockwise?: boolean): any;
 }
 declare namespace curve {
-}
-interface CanvasRenderingContext2D {
-    fill(path: curve.Path, fillRule?: string): void;
-    stroke(path: curve.Path): void;
-    clip(path: curve.Path, fillRule?: string): void;
 }
 declare namespace curve {
 }
@@ -31,7 +21,7 @@ declare namespace curve.ellipticalArc {
 }
 declare namespace curve.parse {
     interface IParser {
-        parse(path: IPath, data: string | Uint8Array): IPath;
+        parse(path: ISegmentExecutor, data: string | Uint8Array): any;
     }
     var style: ParseStyles;
     function getParser(): IParser;
@@ -172,24 +162,16 @@ declare namespace curve.parse.buffer {
 }
 declare namespace curve.parse.buffer {
     class Parser implements IParser {
-        parse(path: IPath, data: string | Uint8Array): IPath;
+        parse(executor: ISegmentExecutor, data: string | Uint8Array): any;
     }
     function parseNumber(tracker: IParseTracker): number;
 }
 declare namespace curve.parse.matching {
     class Parser implements IParser {
-        parse(path: IPath, data: string | Uint8Array): IPath;
+        parse(executor: ISegmentExecutor, data: string | Uint8Array): void;
     }
 }
 declare namespace curve {
-    enum FillRule {
-        EvenOdd = 0,
-        NonZero = 1,
-    }
-    enum SweepDirection {
-        Counterclockwise = 0,
-        Clockwise = 1,
-    }
     enum PenLineCap {
         Flat = 0,
         Square = 1,
@@ -210,21 +192,31 @@ declare namespace curve {
         b: number;
     }
 }
-declare namespace curve {
-    interface IPath {
-        fillRule: FillRule;
-        addPath(path: Path, transform?: SVGMatrix): any;
-        closePath(): any;
-        moveTo(x: number, y: number): any;
-        lineTo(x: number, y: number): any;
-        bezierCurveTo(cp1x: number, cp1y: number, cp2x: number, cp2y: number, x: number, y: number): any;
-        quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): any;
-        arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, anticlockwise?: boolean): any;
-        arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): any;
-        ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, anticlockwise?: boolean): any;
-        rect(x: number, y: number, width: number, height: number): any;
-        draw(ctx: CanvasRenderingContext2D): any;
-    }
+interface ISegmentExecutor {
+    setFillRule(fillRule: FillRule): any;
+    closePath(): any;
+    moveTo(x: number, y: number): any;
+    lineTo(x: number, y: number): any;
+    bezierCurveTo(cp1x: number, cp1y: number, cp2x: number, cp2y: number, x: number, y: number): any;
+    quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): any;
+    arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, anticlockwise?: boolean): any;
+    arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): any;
+    ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, anticlockwise?: boolean): any;
+    ellipticalArc(rx: number, ry: number, rotation: number, largeArcFlag: number, sweepFlag: SweepDirection, ex: number, ey: number): any;
+    rect(x: number, y: number, width: number, height: number): any;
+}
+interface ISegment {
+    (executor: ISegmentExecutor): void;
+}
+declare enum FillRule {
+    EvenOdd = 0,
+    NonZero = 1,
+}
+declare enum SweepDirection {
+    Counterclockwise = 0,
+    Clockwise = 1,
+}
+interface CanvasRenderingContext2D extends ISegmentExecutor {
 }
 declare namespace curve {
     interface IStrokeParameters {
@@ -239,24 +231,15 @@ declare namespace curve {
     }
 }
 declare namespace curve {
-    enum PathOpType {
-        closePath = 0,
-        moveTo = 1,
-        lineTo = 2,
-        bezierCurveTo = 3,
-        quadraticCurveTo = 4,
-        arc = 5,
-        arcTo = 6,
-        ellipse = 7,
-        rect = 8,
-    }
-    class Path implements IPath {
+    class Path implements ISegmentExecutor {
         private $ops;
-        fillRule: FillRule;
         constructor();
         constructor(path: Path);
         constructor(d: string);
-        addPath(path: Path, transform?: SVGMatrix): void;
+        exec(executor: ISegmentExecutor): void;
+        draw(ctx: CanvasRenderingContext2D): void;
+        addPath(path: Path): void;
+        setFillRule(fillRule: FillRule): void;
         closePath(): void;
         moveTo(x: number, y: number): void;
         lineTo(x: number, y: number): void;
@@ -265,8 +248,8 @@ declare namespace curve {
         arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, anticlockwise?: boolean): void;
         arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): void;
         ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, anticlockwise?: boolean): void;
+        ellipticalArc(rx: number, ry: number, rotation: number, largeArcFlag: number, sweepFlag: SweepDirection, ex: number, ey: number): void;
         rect(x: number, y: number, width: number, height: number): void;
-        draw(ctx: CanvasRenderingContext2D): void;
-        static parse(d: string): IPath;
+        static parse(executor: ISegmentExecutor, data: string): void;
     }
 }

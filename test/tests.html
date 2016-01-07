@@ -2,31 +2,18 @@
 <html>
 <head>
     <meta charset='UTF-8'/>
-    <meta http-equiv='content-type' content='text/html; charset=utf-8'/>
     <title>Tests</title>
-
     <link rel="stylesheet" href="lib/qunit/qunit/qunit.css" type="text/css"/>
-    <script src="lib/path2d/dist/path2d.js"></script>
-    <script src="lib/qunit/qunit/qunit.js"></script>
-    <script>
-        QUnit.config.autostart = false;
-    </script>
-    <script type="text/javascript">
-        var require = {
-            baseUrl: "./",
-            paths: {
-                "text": "lib/requirejs-text/text"
-            },
-            deps: ["text"]
-        };
-    </script>
-    <script src="lib/requirejs/require.js" data-main=".build/runner.js"></script>
 </head>
 <body>
 <div id="qunit"></div>
-<!-- QUnit fills this with results, etc -->
-<div id='qunit-fixture'>
-    <!-- any HTML you want to be present in each test (will be reset for each test) -->
-</div>
+<div id="qunit-fixture"></div>
+<script src="lib/qunit/qunit/qunit.js"></script>
+<script src="lib/la/dist/la.js"></script>
+<script src="lib/curve/dist/curve.js"></script>
+
+<script src=".build/tests/parse.matching.js"></script>
+<script src=".build/tests/parseNumber.js"></script>
+
 </body>
 </html>

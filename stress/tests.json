@@ -1,12 +1,12 @@
 {
   "tests": [
     {
-      "name": "parseNumber",
+      "name": "parse.buffer.number",
       "test": "tests/parseNumber",
       "runCount": 100000
     },
     {
-      "name": "parseNumberPreload",
+      "name": "parse.buffer.numberPreload",
       "test": "tests/parseNumberPreload",
       "runCount": 100000
     },
@@ -16,9 +16,19 @@
       "runCount": 100000
     },
     {
-      "name": "MediaParser.ParseDouble",
-      "test": "tests/MediaParser",
-      "runCount": 100000
+      "name": "parse (char matching)",
+      "test": "tests/parse.matching",
+      "runCount": 1000
+    },
+    {
+      "name": "parse (buffer)",
+      "test": "tests/parse.buffer",
+      "runCount": 1000
+    },
+    {
+      "name": "compile",
+      "test": "tests/compile",
+      "runCount": 10000
     }
   ]
 }

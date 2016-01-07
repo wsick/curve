@@ -1,4 +1,4 @@
-namespace curve {
+namespace curve.bounds {
     export interface IBoundingBox {
         l: number;
         t: number;
