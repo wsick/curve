@@ -10,6 +10,8 @@ namespace curve.parse {
     export function getParser(): IParser {
         if (style === ParseStyles.Buffer)
             return new buffer.Parser();
+        else if (style === ParseStyles.Dom)
+            return new dom.Parser();
         return new matching.Parser();
     }
 }

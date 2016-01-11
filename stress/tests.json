@@ -16,8 +16,8 @@
       "runCount": 100000
     },
     {
-      "name": "parse (char matching)",
-      "test": "tests/parse.matching",
+      "name": "parse (dom)",
+      "test": "tests/parse.dom",
       "runCount": 1000
     },
     {
@@ -26,8 +26,23 @@
       "runCount": 1000
     },
     {
+      "name": "parse (char matching)",
+      "test": "tests/parse.matching",
+      "runCount": 1000
+    },
+    {
       "name": "compile",
-      "test": "tests/compile",
+      "test": "tests/compile/compile",
+      "runCount": 10000
+    },
+    {
+      "name": "decompile",
+      "test": "tests/compile/decompile",
+      "runCount": 10000
+    },
+    {
+      "name": "compile + decompile",
+      "test": "tests/compile/both",
       "runCount": 10000
     }
   ]
