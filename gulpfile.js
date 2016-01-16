@@ -34,6 +34,18 @@ var fs = require('fs'),
                     '!stress/lib/**/*.ts',
                     'dist/' + name + '.d.ts'
                 ].concat(allTypings)
+            },
+            {
+                name: 'demo',
+                ignore: 'lib/qunit',
+                port: 8003,
+                symdirs: ['dist', 'src'],
+                src: [
+                    'typings/*.d.ts',
+                    'demo/**/*.ts',
+                    '!demo/lib/**/*.ts',
+                    'dist/' + name + '.d.ts'
+                ].concat(allTypings)
             }
         ]
     };

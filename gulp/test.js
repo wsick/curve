@@ -15,7 +15,6 @@ module.exports = function (meta) {
         return gulp.src(scaffold.src)
             .pipe(sourcemaps.init())
             .pipe(ts({
-                module: 'amd',
                 target: 'ES5',
                 declaration: true,
                 pathFilter: {'test/tests': 'tests'}
