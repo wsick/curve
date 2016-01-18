@@ -22,13 +22,21 @@ namespace curve.parse.dom {
         switch (segment.pathSegType) {
             case SVGPathSeg.PATHSEG_ARC_ABS:
                 let arc1 = <SVGPathSegArcAbs>segment;
-                ellipticalArc.genEllipse(runner, cur[0], cur[1], arc1.x, arc1.y, arc1.largeArcFlag ? 1 : 0, arc1.sweepFlag ? 1 : 0, arc1.r1, arc1.r2, arc1.angle);
+                let ell1 = ellipticalArc.toEllipse(cur[0], cur[1], arc1.x, arc1.y, arc1.largeArcFlag ? 1 : 0, arc1.sweepFlag ? 1 : 0, arc1.r1, arc1.r2, arc1.angle);
+                if (!ell1.rx || !ell1.ry)
+                    runner.lineTo(ell1.x, ell1.y);
+                else
+                    runner.ellipse(ell1.x, ell1.y, ell1.rx, ell1.ry, ell1.phi, ell1.sa, ell1.ea, ell1.ac);
                 cur[0] = arc1.x;
                 cur[1] = arc1.y;
                 break;
             case SVGPathSeg.PATHSEG_ARC_REL:
                 let arc2 = <SVGPathSegArcRel>segment;
-                ellipticalArc.genEllipse(runner, cur[0], cur[1], cur[0] + arc2.x, cur[1] + arc2.y, arc2.largeArcFlag ? 1 : 0, arc2.sweepFlag ? 1 : 0, arc2.r1, arc2.r2, arc2.angle);
+                let ell2 = ellipticalArc.toEllipse(cur[0], cur[1], cur[0] + arc2.x, cur[1] + arc2.y, arc2.largeArcFlag ? 1 : 0, arc2.sweepFlag ? 1 : 0, arc2.r1, arc2.r2, arc2.angle);
+                if (!ell2.rx || !ell2.ry)
+                    runner.lineTo(ell2.x, ell2.y);
+                else
+                    runner.ellipse(ell2.x, ell2.y, ell2.rx, ell2.ry, ell2.phi, ell2.sa, ell2.ea, ell2.ac);
                 cur[0] += arc2.x;
                 cur[1] += arc2.y;
                 break;

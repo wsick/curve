@@ -2,24 +2,37 @@ namespace curve.ellipticalArc {
     import vec2 = la.vec2;
     var PI2 = 2 * Math.PI;
 
+    export interface IEllipseParameterization {
+        x: number;
+        y: number;
+        rx: number;
+        ry: number;
+        phi?: number; // rotation (radians)
+        sa?: number; // start angle (radians)
+        ea?: number; // end angle (radians)
+        ac?: boolean; // anti-clockwise
+    }
+
     // [x1, y1] = start point
     // [x2, y2] = end point
     // fa = large arc flag
     // fs = sweep direction flag
     // [rx, ry] = radial size
     // phi = angle (radians) from x-axis of coordinate space to x-axis of ellipse
-    export function genEllipse(runner: ISegmentRunner, x1: number, y1: number, x2: number, y2: number, fa: number, fs: number, rx: number, ry: number, phi: number) {
-        // Convert from endpoint to center parametrization, as detailed in:
-        //   http://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes
+    export function toEllipse(x1: number, y1: number, x2: number, y2: number, fa: number, fs: number, rx: number, ry: number, phi: number): IEllipseParameterization {
+        // http://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes
+        // F.6.5 Conversion from endpoint to center parameterization
         if (rx === 0 || ry === 0) {
-            runner.lineTo(x2, y2);
-            return;
+            return {x: x2, y: y2, rx: rx, ry: ry};
         }
 
         // F.6.5.1
         // Compute a`
         var ap = vec2.midpoint(vec2.create(x1, y1), vec2.create(x2, y2));
         vec2.rotate(ap, -phi);
+
+        // Correct radii
+        [rx, ry] = correctRadii(rx, ry, ap[0], ap[1]);
 
         // F.6.5.2
         // Compute c`
@@ -57,6 +70,15 @@ namespace curve.ellipticalArc {
             dt += PI2;
         }
 
-        runner.ellipse(c[0], c[1], rx, ry, phi, sa, sa + dt, (1 - fs) === 1);
+        return {
+            x: c[0],
+            y: c[1],
+            rx: rx,
+            ry: ry,
+            phi: phi,
+            sa: sa,
+            ea: sa + dt,
+            ac: (1 - fs) === 1
+        };
     }
 }
