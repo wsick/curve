@@ -1,7 +1,7 @@
-namespace curve.bounds.stroke.tests.quadraticBezier {
-    QUnit.module("bounds.stroke.quadraticBezier");
+namespace curve.bounds.stroke.tests.cubicBezier {
+    QUnit.module("bounds.stroke.cubicBezier");
 
-    var path1 = new Path("M122,213 Q118,449,467,161");
+    var path1 = new Path("M335,308 C516,432,88,381,792,526");
 
     QUnit.test("flat-cap", (assert) => {
         var bounds = new StrokeBounds(path1);
@@ -11,10 +11,10 @@ namespace curve.bounds.stroke.tests.quadraticBezier {
         bounds.ensure();
 
         boxClose(assert, bounds, {
-            l: 101.95467422096317,
-            t: 145.5741617679596,
-            r: 479.7296316623688,
-            b: 339.2900763358778
+            l: 323.69652032852173,
+            t: 291.50056529045105,
+            r: 796.0346285700798,
+            b: 545.588817358017
         }, "#1");
     });
 
@@ -26,10 +26,10 @@ namespace curve.bounds.stroke.tests.quadraticBezier {
         bounds.ensure();
 
         boxClose(assert, bounds, {
-            l: 101.95467422096317,
-            t: 132.84453010559082,
-            r: 495.1554698944092,
-            b: 339.2900763358778
+            l: 307.1970856189728,
+            t: 280.1970856189728,
+            r: 815.6234459280968,
+            b: 549.6234459280968
         }, "#1");
     });
 
@@ -40,6 +40,6 @@ namespace curve.bounds.stroke.tests.quadraticBezier {
         bounds.pars.strokeStartLineCap = bounds.pars.strokeEndLineCap = PenLineCap.Round;
         bounds.ensure();
 
-        boxClose(assert, bounds, {l: 101.95467422096317, t: 141, r: 487, b: 339.2900763358778}, "#1");
+        boxClose(assert, bounds, {l: 315, t: 288, r: 812, b: 546}, "#1");
     });
 }
