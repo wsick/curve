@@ -8,7 +8,7 @@ namespace curve.compiler {
                 continue;
             }
             var func = runner[typeStr];
-            func && func(seg.a);
+            func && func.apply(runner, seg.a);
         }
     }
 }

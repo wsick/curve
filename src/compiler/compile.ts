@@ -1,7 +1,7 @@
 namespace curve.compiler {
     export function compile(arg0: string|ISegmentExecutor): ICompiledSegment[] {
         var compiler = PathCompiler.instance;
-        compiler.compiled = [];
+        compiler.compiled.length = 0;
         if (typeof arg0 === "string") {
             var parser = parse.getParser();
             parser.parse(compiler, arg0);

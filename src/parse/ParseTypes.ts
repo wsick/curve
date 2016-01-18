@@ -1,6 +1,7 @@
 namespace curve.parse {
     export enum ParseStyles {
-        CharMatching = 2,
-        Buffer = 1,
+        Dom = 1,
+        Buffer = 2,
+        CharMatching = 3,
     }
 }

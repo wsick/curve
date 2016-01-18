@@ -1,4 +1,4 @@
-import StressTest = require('./StressTest');
+import StressTest = require('../StressTest');
 
 class Compile extends StressTest {
     path: curve.Path;
