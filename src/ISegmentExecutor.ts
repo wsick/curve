@@ -11,7 +11,7 @@ interface ISegmentRunner {
     quadraticCurveTo(cpx: number, cpy: number, x: number, y: number);
     arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, anticlockwise?: boolean);
     arcTo(x1: number, y1: number, x2: number, y2: number, radius: number);
-    ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, antiClockwise?: boolean);
+    ellipse(cx: number, cy: number, rx: number, ry: number, rotation: number, startAngle: number, endAngle: number, antiClockwise?: boolean);
 }
 
 interface ISegment {

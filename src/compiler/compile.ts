@@ -48,10 +48,10 @@ namespace curve.compiler {
             this.compiled.push({t: CompiledOpType.arcTo, a: [x1, y1, x2, y2, radius]});
         }
 
-        ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, antiClockwise?: boolean) {
+        ellipse(cx: number, cy: number, rx: number, ry: number, rotation: number, startAngle: number, endAngle: number, antiClockwise?: boolean) {
             this.compiled.push({
                 t: CompiledOpType.ellipse,
-                a: [x, y, radiusX, radiusY, rotation, startAngle, endAngle, antiClockwise]
+                a: [cx, cy, rx, ry, rotation, startAngle, endAngle, antiClockwise]
             })
         }
     }

@@ -2,9 +2,17 @@ namespace curve.ellipticalArc {
     import vec2 = la.vec2;
     var PI2 = 2 * Math.PI;
 
+    // NOTES
+    // rx, ry, phi are the same between both parameterizations
+    // [cx, cy] is computed based on [sx, sy, rx, ry, ex, ey, fa, fs]
+    // there are 2 possible solutions for ellipse [cx, cy]
+    // each ellipse has 2 possible solutions
+    //   these solutions should be chosen based on fa, fs, and [sx,sy]->[ex,ey] relationship
+    //   the solutions chosen should have exactly one anti-clockwise true and one anti-clockwise false
+
     export interface IEllipseParameterization {
-        x: number;
-        y: number;
+        cx: number;
+        cy: number;
         rx: number;
         ry: number;
         phi?: number; // rotation (radians)
@@ -13,22 +21,22 @@ namespace curve.ellipticalArc {
         ac?: boolean; // anti-clockwise
     }
 
-    // [x1, y1] = start point
-    // [x2, y2] = end point
-    // fa = large arc flag
-    // fs = sweep direction flag
+    // [sx, sy] = start point
     // [rx, ry] = radial size
     // phi = angle (radians) from x-axis of coordinate space to x-axis of ellipse
-    export function toEllipse(x1: number, y1: number, x2: number, y2: number, fa: number, fs: number, rx: number, ry: number, phi: number): IEllipseParameterization {
+    // fa = large arc flag
+    // fs = sweep direction flag
+    // [ex, ey] = end point
+    export function toEllipse(sx: number, sy: number, rx: number, ry: number, phi: number, fa: number, fs: number, ex: number, ey: number): IEllipseParameterization {
         // http://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes
         // F.6.5 Conversion from endpoint to center parameterization
         if (rx === 0 || ry === 0) {
-            return {x: x2, y: y2, rx: rx, ry: ry};
+            return {cx: ex, cy: ey, rx: rx, ry: ry};
         }
 
         // F.6.5.1
         // Compute a`
-        var ap = vec2.midpoint(vec2.create(x1, y1), vec2.create(x2, y2));
+        var ap = vec2.create((sx - ex) / 2.0, (sy - ey) / 2.0);
         vec2.rotate(ap, -phi);
 
         // Correct radii
@@ -51,18 +59,22 @@ namespace curve.ellipticalArc {
         // F.6.5.3
         // Compute c
         var c = vec2.rotate(vec2.clone(cp), phi);
-        c[0] += (x1 + x2) / 2.0;
-        c[1] += (y1 + y2) / 2.0;
+        c[0] += (sx + ex) / 2.0;
+        c[1] += (sy + ey) / 2.0;
 
         // F.6.5.5
         // Compute theta1
+        var v = vec2.create(1, 0);
         var u = vec2.create((ap[0] - cp[0]) / rx, (ap[1] - cp[1]) / ry);
-        var v = vec2.create((-ap[0] - cp[0]) / rx, (-ap[1] - cp[1]) / ry);
-        var sa = vec2.angleBetween(vec2.create(1, 0), u);
+        var sa = vec2.angleBetween(v, u) * signAdjust(v, u);
+        if (sa < 0) {
+            sa += PI2;
+        }
 
         // F.6.5.6
         // Compute delta-theta
-        var dt = vec2.angleBetween(u, v) % PI2;
+        v = vec2.create((-ap[0] - cp[0]) / rx, (-ap[1] - cp[1]) / ry);
+        var dt = (vec2.angleBetween(u, v) * signAdjust(u, v)) % PI2;
         // Correct for sweep flag
         if (fs === 0 && dt > 0) {
             dt -= PI2;
@@ -70,15 +82,27 @@ namespace curve.ellipticalArc {
             dt += PI2;
         }
 
+        // Normalize end angle
+        var ea = (sa + dt) % PI2;
+        if (ea < 0) {
+            ea += PI2;
+        }
+
+        var ac = fs === 0;
+
         return {
-            x: c[0],
-            y: c[1],
+            cx: c[0],
+            cy: c[1],
             rx: rx,
             ry: ry,
             phi: phi,
             sa: sa,
-            ea: sa + dt,
-            ac: (1 - fs) === 1
+            ea: ea,
+            ac: ac
         };
+    }
+
+    function signAdjust(u: Float32Array, v: Float32Array): number {
+        return ((u[0] * v[1]) - (u[1] * v[0])) < 0 ? -1 : 1;
     }
 }

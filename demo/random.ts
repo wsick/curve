@@ -9,4 +9,8 @@ namespace demo.random {
     export function randomInt(low: number, high: number): number {
         return Math.floor(Math.random() * (high - low) + low);
     }
+
+    export function flag(): boolean {
+        return Math.round(Math.random()) === 1;
+    }
 }

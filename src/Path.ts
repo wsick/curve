@@ -64,8 +64,8 @@ namespace curve {
             this.$ops.push(exec => exec.arcTo(x1, y1, x2, y2, radius));
         }
 
-        ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, antiClockwise?: boolean) {
-            this.$ops.push(exec => exec.ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle, antiClockwise));
+        ellipse(cx: number, cy: number, rx: number, ry: number, rotation: number, startAngle: number, endAngle: number, antiClockwise?: boolean) {
+            this.$ops.push(exec => exec.ellipse(cx, cy, rx, ry, rotation, startAngle, endAngle, antiClockwise));
         }
 
         static parse(runner: ISegmentRunner, data: string) {

@@ -318,11 +318,11 @@ namespace curve.parse.matching {
                             }
 
                             var phi = angle * Math.PI / 180.0;
-                            ell = ellipticalArc.toEllipse(cp.x, cp.y, cp2.x, cp2.y, is_large, sweep, phi, cp1.x, cp1.y);
+                            ell = ellipticalArc.toEllipse(cp.x, cp.y, cp1.x, cp1.y, phi, is_large, sweep, cp2.x, cp2.y);
                             if (!ell.rx || !ell.ry)
-                                runner.lineTo(ell.x, ell.y);
+                                runner.lineTo(ell.cx, ell.cy);
                             else
-                                runner.ellipse(ell.x, ell.y, ell.rx, ell.ry, ell.phi, ell.sa, ell.ea, ell.ac);
+                                runner.ellipse(ell.cx, ell.cy, ell.rx, ell.ry, ell.phi, ell.sa, ell.ea, ell.ac);
 
                             cp.x = cp2.x;
                             cp.y = cp2.y;
