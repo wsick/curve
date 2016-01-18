@@ -16,29 +16,10 @@ declare var TextEncoder: {
     prototpye: TextEncoder;
     new (): TextEncoder;
 };
-declare namespace curve.ellipticalArc {
-    function generate(path: Path, sx: number, sy: number, rx: number, ry: number, rotationAngle: number, isLargeArcFlag: boolean, sweepDirectionFlag: SweepDirection, ex: number, ey: number): void;
-}
-declare namespace curve.parse {
-    interface IParser {
-        parse(path: ISegmentExecutor, data: string | Uint8Array): any;
-    }
-    var style: ParseStyles;
-    function getParser(): IParser;
-}
-declare namespace curve.parse {
-    enum ParseStyles {
-        CharMatching = 2,
-        Buffer = 1,
-    }
-}
-declare namespace curve.segments {
-    interface IArcMetrics {
-        inited: boolean;
+declare namespace curve.bounds.extenders {
+    interface IArcMetrics extends ISegmentMetrics {
         sx: number;
         sy: number;
-        ex: number;
-        ey: number;
         l: number;
         cl: boolean;
         r: number;
@@ -48,127 +29,166 @@ declare namespace curve.segments {
         b: number;
         cb: boolean;
     }
-    class Arc implements ISegment {
-        draw(ctx: CanvasRenderingContext2D, args: any[]): void;
-        init(metrics: IArcMetrics, x: number, y: number, radius: number, sa: number, ea: number, cc: boolean): void;
-        extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[], metrics?: any): void;
-        extendStrokeBox(box: IBoundingBox, sx: number, sy: number, args: any[], pars: IStrokeParameters, metrics?: any): void;
-        getStartVector(sx: number, sy: number, args: any[], metrics?: any): number[];
-        getEndVector(sx: number, sy: number, args: any[], metrics?: any): number[];
+    class Arc implements IBoundsExtender {
+        isMove: boolean;
+        init(sx: number, sy: number, args: any[]): IArcMetrics;
+        extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[], metrics: IArcMetrics): void;
+        extendStrokeBox(box: IBoundingBox, sx: number, sy: number, args: any[], metrics: IArcMetrics, pars: IStrokeParameters): void;
     }
 }
-declare namespace curve.segments {
-    class LineTo implements ISegment {
-        draw(ctx: CanvasRenderingContext2D, args: any[]): void;
-        extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[]): void;
-        extendStrokeBox(box: IBoundingBox, sx: number, sy: number, args: any[], pars: IStrokeParameters): void;
-        getStartVector(sx: number, sy: number, args: any[]): number[];
-        getEndVector(sx: number, sy: number, args: any[]): number[];
+declare namespace curve.bounds.extenders {
+    class LineTo implements IBoundsExtender {
+        isMove: boolean;
+        init(sx: number, sy: number, args: any[]): ISegmentMetrics;
+        extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[], metrics: ISegmentMetrics): void;
+        extendStrokeBox(box: IBoundingBox, sx: number, sy: number, args: any[], metrics: ISegmentMetrics, pars: IStrokeParameters): void;
     }
 }
-declare namespace curve.segments {
-    interface IArcToMetrics {
-        inited: boolean;
-        sx: number;
-        sy: number;
+declare namespace curve.bounds.extenders {
+    interface IArcToMetrics extends ISegmentMetrics {
         line: {
             args: any[];
+            metrics: ISegmentMetrics;
         };
         arc: {
-            sx: number;
-            sy: number;
             args: any[];
-            metrics?: IArcMetrics;
+            metrics: IArcMetrics;
         };
     }
-    class ArcTo implements ISegment {
-        draw(ctx: CanvasRenderingContext2D, args: any[]): void;
-        init(metrics: IArcToMetrics, sx: number, sy: number, args: any[]): void;
-        extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[], metrics?: any): void;
-        extendStrokeBox(box: IBoundingBox, sx: number, sy: number, args: any[], pars: IStrokeParameters, metrics?: any): void;
-        getStartVector(sx: number, sy: number, args: any[], metrics?: any): number[];
-        getEndVector(sx: number, sy: number, args: any[], metrics?: any): number[];
+    class ArcTo implements IBoundsExtender {
+        isMove: boolean;
+        init(sx: number, sy: number, args: any[]): IArcToMetrics;
+        extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[], metrics: IArcToMetrics): void;
+        extendStrokeBox(box: IBoundingBox, sx: number, sy: number, args: any[], metrics: IArcToMetrics, pars: IStrokeParameters): void;
     }
 }
-declare namespace curve.segments {
-    class BezierCurveTo implements ISegment {
-        draw(ctx: CanvasRenderingContext2D, args: any[]): void;
-        extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[]): void;
-        extendStrokeBox(box: IBoundingBox, sx: number, sy: number, args: any[], pars: IStrokeParameters): void;
-        getStartVector(sx: number, sy: number, args: any[]): number[];
-        getEndVector(sx: number, sy: number, args: any[]): number[];
+declare namespace curve.bounds.extenders {
+    class BezierCurveTo implements IBoundsExtender {
+        isMove: boolean;
+        init(sx: number, sy: number, args: any[]): ISegmentMetrics;
+        extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[], metrics: ISegmentMetrics): void;
+        extendStrokeBox(box: IBoundingBox, sx: number, sy: number, args: any[], metrics: ISegmentMetrics, pars: IStrokeParameters): void;
     }
 }
-declare namespace curve.segments {
-    class ClosePath implements ISegment {
-        draw(ctx: CanvasRenderingContext2D, args: any[]): void;
-        extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[]): void;
-        extendStrokeBox(box: IBoundingBox, sx: number, sy: number, args: any[], pars: IStrokeParameters): void;
-        getStartVector(sx: number, sy: number, args: any[]): number[];
-        getEndVector(sx: number, sy: number, args: any[]): number[];
+declare namespace curve.bounds.extenders {
+    class ClosePath implements IBoundsExtender {
+        isMove: boolean;
+        init(): ISegmentMetrics;
+        extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[], metrics: ISegmentMetrics): void;
+        extendStrokeBox(box: IBoundingBox, sx: number, sy: number, args: any[], metrics: ISegmentMetrics, pars: IStrokeParameters): void;
     }
 }
-declare namespace curve.segments {
-    class Ellipse implements ISegment {
-        draw(ctx: CanvasRenderingContext2D, args: any[]): void;
-        extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[], metrics?: any): void;
-        extendStrokeBox(box: IBoundingBox, sx: number, sy: number, args: any[], pars: IStrokeParameters, metrics?: any): void;
-        getStartVector(sx: number, sy: number, args: any[], metrics?: any): number[];
-        getEndVector(sx: number, sy: number, args: any[], metrics?: any): number[];
+declare namespace curve.bounds.extenders {
+    class Ellipse implements IBoundsExtender {
+        isMove: boolean;
+        init(sx: number, sy: number, args: any[]): curve.bounds.extenders.ISegmentMetrics;
+        extendFillBox(box: curve.bounds.IBoundingBox, sx: number, sy: number, args: any[], metrics: curve.bounds.extenders.ISegmentMetrics): void;
+        extendStrokeBox(box: curve.bounds.IBoundingBox, sx: number, sy: number, args: any[], metrics: curve.bounds.extenders.ISegmentMetrics, pars: curve.IStrokeParameters): void;
     }
 }
-declare namespace curve.segments {
-    class MoveTo implements ISegment {
-        draw(ctx: CanvasRenderingContext2D, args: any[]): void;
-        extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[]): void;
-        extendStrokeBox(box: IBoundingBox, sx: number, sy: number, args: any[], pars: IStrokeParameters): void;
-        getStartVector(sx: number, sy: number, args: any[]): number[];
-        getEndVector(sx: number, sy: number, args: any[]): number[];
+declare namespace curve.bounds.extenders {
+    class MoveTo implements IBoundsExtender {
+        isMove: boolean;
+        init(sx: number, sy: number, args: any[]): ISegmentMetrics;
+        extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[], metrics: ISegmentMetrics): void;
+        extendStrokeBox(box: IBoundingBox, sx: number, sy: number, args: any[], metrics: ISegmentMetrics, pars: IStrokeParameters): void;
     }
 }
-declare namespace curve.segments {
-    class QuadraticCurveTo implements ISegment {
-        draw(ctx: CanvasRenderingContext2D, args: any[]): void;
-        extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[]): void;
-        extendStrokeBox(box: IBoundingBox, sx: number, sy: number, args: any[], pars: IStrokeParameters): void;
-        getStartVector(sx: number, sy: number, args: any[]): number[];
-        getEndVector(sx: number, sy: number, args: any[]): number[];
+declare namespace curve.bounds.extenders {
+    class QuadraticCurveTo implements IBoundsExtender {
+        isMove: boolean;
+        init(sx: number, sy: number, args: any[]): ISegmentMetrics;
+        extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[], metrics: ISegmentMetrics): void;
+        extendStrokeBox(box: IBoundingBox, sx: number, sy: number, args: any[], metrics: ISegmentMetrics, pars: IStrokeParameters): void;
     }
 }
-declare namespace curve.segments {
-    class Rect implements ISegment {
-        draw(ctx: CanvasRenderingContext2D, args: any[]): void;
-        extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[], metrics?: any): void;
-        extendStrokeBox(box: IBoundingBox, sx: number, sy: number, args: any[], pars: IStrokeParameters, metrics?: any): void;
-        getStartVector(sx: number, sy: number, args: any[], metrics?: any): number[];
-        getEndVector(sx: number, sy: number, args: any[], metrics?: any): number[];
+declare namespace curve.bounds {
+    class ExtenderSelector implements ISegmentRunner {
+        current: extenders.IBoundsExtender;
+        args: any[];
+        setFillRule(fillRule: FillRule): void;
+        closePath(): void;
+        moveTo(x: number, y: number): void;
+        lineTo(x: number, y: number): void;
+        bezierCurveTo(cp1x: number, cp1y: number, cp2x: number, cp2y: number, x: number, y: number): void;
+        quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): void;
+        arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, anticlockwise?: boolean): void;
+        arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): void;
+        ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, antiClockwise?: boolean): void;
     }
 }
-declare namespace curve.segments {
-    interface ISegment {
-        draw(ctx: CanvasRenderingContext2D, args: any[]): any;
-        extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[], metrics?: any): any;
-        extendStrokeBox(box: IBoundingBox, sx: number, sy: number, args: any[], pars: IStrokeParameters, metrics?: any): any;
-        getStartVector(sx: number, sy: number, args: any[], metrics?: any): number[];
-        getEndVector(sx: number, sy: number, args: any[], metrics?: any): number[];
-    }
-    var all: any[];
-}
-declare namespace curve.parse.buffer {
-    interface IParseTracker {
-        data: Uint8Array;
-        offset: number;
+declare namespace curve.bounds {
+    interface IBoundingBox {
+        l: number;
+        t: number;
+        r: number;
+        b: number;
     }
 }
-declare namespace curve.parse.buffer {
-    class Parser implements IParser {
-        parse(executor: ISegmentExecutor, data: string | Uint8Array): any;
-    }
-    function parseNumber(tracker: IParseTracker): number;
+declare namespace curve.compiler {
+    function compile(arg0: string | ISegmentExecutor): ICompiledSegment[];
 }
-declare namespace curve.parse.matching {
-    class Parser implements IParser {
-        parse(executor: ISegmentExecutor, data: string | Uint8Array): void;
+declare namespace curve.compiler {
+    function decompile(runner: ISegmentRunner, compiled: ICompiledSegment[]): void;
+}
+interface ICompiledSegment {
+    t: CompiledOpType;
+    a: any[];
+}
+declare enum CompiledOpType {
+    setFillRule = 1,
+    closePath = 2,
+    moveTo = 3,
+    lineTo = 4,
+    bezierCurveTo = 5,
+    quadraticCurveTo = 6,
+    arc = 7,
+    arcTo = 8,
+    ellipse = 9,
+}
+declare namespace curve.ellipticalArc {
+    function genEllipse(runner: ISegmentRunner, x1: number, y1: number, x2: number, y2: number, fa: number, fs: number, rx: number, ry: number, phi: number): void;
+}
+declare namespace curve.parse {
+    enum ParseStyles {
+        Dom = 1,
+        Buffer = 2,
+        CharMatching = 3,
+    }
+}
+declare namespace curve.parse {
+    interface IParser {
+        parse(runner: ISegmentRunner, data: string | Uint8Array): any;
+    }
+    var style: ParseStyles;
+    function getParser(): IParser;
+}
+declare namespace curve.bounds.extenders {
+    interface IBoundsExtender {
+        isMove: boolean;
+        init(sx: number, sy: number, args: any[]): ISegmentMetrics;
+        extendFillBox(box: IBoundingBox, sx: number, sy: number, args: any[], metrics: ISegmentMetrics): any;
+        extendStrokeBox(box: IBoundingBox, sx: number, sy: number, args: any[], metrics: ISegmentMetrics, pars: IStrokeParameters): any;
+    }
+}
+declare namespace curve.bounds.extenders {
+    interface ISegmentMetrics {
+        endPoint: Float32Array;
+        startVector: Float32Array;
+        endVector: Float32Array;
+    }
+}
+declare namespace curve.bounds.fill {
+    class FillBounds implements IBoundingBox {
+        path: Path;
+        l: number;
+        t: number;
+        r: number;
+        b: number;
+        private $calc;
+        constructor(path: Path);
+        ensure(): this;
+        calculate(): this;
     }
 }
 declare namespace curve {
@@ -183,42 +203,6 @@ declare namespace curve {
         Bevel = 1,
         Round = 2,
     }
-}
-declare namespace curve {
-    interface IBoundingBox {
-        l: number;
-        t: number;
-        r: number;
-        b: number;
-    }
-}
-interface ISegmentExecutor {
-    setFillRule(fillRule: FillRule): any;
-    closePath(): any;
-    moveTo(x: number, y: number): any;
-    lineTo(x: number, y: number): any;
-    bezierCurveTo(cp1x: number, cp1y: number, cp2x: number, cp2y: number, x: number, y: number): any;
-    quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): any;
-    arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, anticlockwise?: boolean): any;
-    arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): any;
-    ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, anticlockwise?: boolean): any;
-    ellipticalArc(rx: number, ry: number, rotation: number, largeArcFlag: number, sweepFlag: SweepDirection, ex: number, ey: number): any;
-    rect(x: number, y: number, width: number, height: number): any;
-}
-interface ISegment {
-    (executor: ISegmentExecutor): void;
-}
-declare enum FillRule {
-    EvenOdd = 0,
-    NonZero = 1,
-}
-declare enum SweepDirection {
-    Counterclockwise = 0,
-    Clockwise = 1,
-}
-interface CanvasRenderingContext2D extends ISegmentExecutor {
-}
-declare namespace curve {
     interface IStrokeParameters {
         strokeThickness: number;
         strokeDashArray: number[];
@@ -230,13 +214,92 @@ declare namespace curve {
         strokeStartLineCap: PenLineCap;
     }
 }
+declare namespace curve.bounds.stroke {
+    function extendEndCap(box: IBoundingBox, metrics: any, pars: IStrokeParameters): void;
+}
+declare namespace curve.bounds.stroke {
+    import ISegmentMetrics = curve.bounds.extenders.ISegmentMetrics;
+    function extendLineJoin(box: IBoundingBox, sx: number, sy: number, metrics: ISegmentMetrics, lastMetrics: ISegmentMetrics, pars: IStrokeParameters): void;
+}
+declare namespace curve.bounds.stroke {
+    function extendStartCap(box: IBoundingBox, sx: number, sy: number, metrics: any, pars: IStrokeParameters): void;
+}
+declare namespace curve.bounds.stroke {
+    class StartCapExtender {
+        extend(): void;
+    }
+}
+declare namespace curve.bounds.stroke {
+    class StrokeBounds implements IBoundingBox {
+        path: Path;
+        pars: IStrokeParameters;
+        l: number;
+        t: number;
+        r: number;
+        b: number;
+        private $calc;
+        constructor(path: Path);
+        ensure(): this;
+        calculate(): this;
+    }
+}
+declare namespace curve.parse.buffer {
+    interface IParseTracker {
+        data: Uint8Array;
+        offset: number;
+    }
+}
+declare namespace curve.parse.buffer {
+    class Parser implements IParser {
+        parse(runner: ISegmentRunner, data: string | Uint8Array): any;
+    }
+    function parseNumber(tracker: IParseTracker): number;
+}
+declare namespace curve.parse.dom {
+    class Parser implements IParser {
+        parse(runner: ISegmentRunner, data: string | Uint8Array): void;
+    }
+}
+declare namespace curve.parse.matching {
+    class Parser implements IParser {
+        parse(runner: ISegmentRunner, data: string | Uint8Array): void;
+    }
+}
+interface ISegmentExecutor {
+    exec(runner: ISegmentRunner, step?: Function): any;
+}
+interface ISegmentRunner {
+    setFillRule(fillRule: FillRule): any;
+    closePath(): any;
+    moveTo(x: number, y: number): any;
+    lineTo(x: number, y: number): any;
+    bezierCurveTo(cp1x: number, cp1y: number, cp2x: number, cp2y: number, x: number, y: number): any;
+    quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): any;
+    arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, anticlockwise?: boolean): any;
+    arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): any;
+    ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, antiClockwise?: boolean): any;
+}
+interface ISegment {
+    (runner: ISegmentRunner): void;
+}
+declare enum FillRule {
+    EvenOdd = 0,
+    NonZero = 1,
+}
+declare enum SweepDirection {
+    Counterclockwise = 0,
+    Clockwise = 1,
+}
+interface CanvasRenderingContext2D extends ISegmentRunner {
+}
 declare namespace curve {
-    class Path implements ISegmentExecutor {
+    class Path implements ISegmentRunner, ISegmentExecutor {
         private $ops;
         constructor();
         constructor(path: Path);
         constructor(d: string);
-        exec(executor: ISegmentExecutor): void;
+        constructor(compiled: ICompiledSegment[]);
+        exec(runner: ISegmentRunner, step?: Function): void;
         draw(ctx: CanvasRenderingContext2D): void;
         addPath(path: Path): void;
         setFillRule(fillRule: FillRule): void;
@@ -247,9 +310,10 @@ declare namespace curve {
         quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): void;
         arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, anticlockwise?: boolean): void;
         arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): void;
-        ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, anticlockwise?: boolean): void;
-        ellipticalArc(rx: number, ry: number, rotation: number, largeArcFlag: number, sweepFlag: SweepDirection, ex: number, ey: number): void;
-        rect(x: number, y: number, width: number, height: number): void;
-        static parse(executor: ISegmentExecutor, data: string): void;
+        ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, antiClockwise?: boolean): void;
+        static parse(runner: ISegmentRunner, data: string): void;
     }
+}
+declare namespace curve {
+    function serialize(path: Path): string;
 }

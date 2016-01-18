@@ -47,110 +47,756 @@ var curve;
 })(this);
 var curve;
 (function (curve) {
-    var ellipticalArc;
-    (function (ellipticalArc) {
-        var NO_DRAW_EPSILON = 0.000002;
-        var ZERO_EPSILON = 0.000019;
-        var SMALL_EPSILON = 0.000117;
-        function generate(path, sx, sy, rx, ry, rotationAngle, isLargeArcFlag, sweepDirectionFlag, ex, ey) {
-            var sx = sx, sy = sy, ex = ex, ey = ey, rx = rx, ry = ry;
-            if (Math.abs(ex - sx) < NO_DRAW_EPSILON && Math.abs(ey - sy) < NO_DRAW_EPSILON)
-                return;
-            if (Math.abs(rx) < ZERO_EPSILON || Math.abs(ry) < ZERO_EPSILON) {
-                path.lineTo(ex, ey);
-                return;
+    var bounds;
+    (function (bounds) {
+        var extenders;
+        (function (extenders) {
+            var vec2 = la.vec2;
+            var Arc = (function () {
+                function Arc() {
+                    this.isMove = false;
+                }
+                Arc.prototype.init = function (sx, sy, args) {
+                    var x = args[0];
+                    var y = args[1];
+                    var radius = args[2];
+                    var sa = args[3];
+                    var ea = args[4];
+                    var cc = args[5];
+                    sx = x + (radius * Math.cos(sa));
+                    sy = y + (radius * Math.sin(sa));
+                    var ex = x + (radius * Math.cos(ea));
+                    var ey = y + (radius * Math.sin(ea));
+                    var l = x - radius;
+                    var cl = arcContainsPoint(sx, sy, ex, ey, l, y, cc);
+                    var r = x + radius;
+                    var cr = arcContainsPoint(sx, sy, ex, ey, r, y, cc);
+                    var t = y - radius;
+                    var ct = arcContainsPoint(sx, sy, ex, ey, x, t, cc);
+                    var b = y + radius;
+                    var cb = arcContainsPoint(sx, sy, ex, ey, x, b, cc);
+                    return {
+                        sx: sx,
+                        sy: sy,
+                        l: l,
+                        cl: cl,
+                        r: r,
+                        cr: cr,
+                        t: t,
+                        ct: ct,
+                        b: b,
+                        cb: cb,
+                        endPoint: vec2.create(ex, ey),
+                        startVector: getStartVector(x, y, cc, sx, sy),
+                        endVector: getEndVector(x, y, cc, ex, ey)
+                    };
+                };
+                Arc.prototype.extendFillBox = function (box, sx, sy, args, metrics) {
+                    var sa = args[3];
+                    var ea = args[4];
+                    if (ea === sa)
+                        return;
+                    var ep = metrics.endPoint, ex = ep[0], ey = ep[1];
+                    box.l = Math.min(box.l, sx, ex);
+                    box.r = Math.max(box.r, sx, ex);
+                    box.t = Math.min(box.t, sy, ey);
+                    box.b = Math.max(box.b, sy, ey);
+                    if (metrics.cl)
+                        box.l = Math.min(box.l, metrics.l);
+                    if (metrics.cr)
+                        box.r = Math.max(box.r, metrics.r);
+                    if (metrics.ct)
+                        box.t = Math.min(box.t, metrics.t);
+                    if (metrics.cb)
+                        box.b = Math.max(box.b, metrics.b);
+                };
+                Arc.prototype.extendStrokeBox = function (box, sx, sy, args, metrics, pars) {
+                    var sa = args[3];
+                    var ea = args[4];
+                    if (ea === sa)
+                        return;
+                    var ep = metrics.endPoint, ex = ep[0], ey = ep[1];
+                    box.l = Math.min(box.l, sx, ex);
+                    box.r = Math.max(box.r, sx, ex);
+                    box.t = Math.min(box.t, sy, ey);
+                    box.b = Math.max(box.b, sy, ey);
+                    var hs = pars.strokeThickness / 2.0;
+                    if (metrics.cl)
+                        box.l = Math.min(box.l, metrics.l - hs);
+                    if (metrics.cr)
+                        box.r = Math.max(box.r, metrics.r + hs);
+                    if (metrics.ct)
+                        box.t = Math.min(box.t, metrics.t - hs);
+                    if (metrics.cb)
+                        box.b = Math.max(box.b, metrics.b + hs);
+                    var cap = pars.strokeStartLineCap || pars.strokeEndLineCap || 0;
+                    var sv = vec2.reverse(vec2.clone(metrics.startVector));
+                    var ss = getCapSpread(sx, sy, pars.strokeThickness, cap, sv);
+                    var es = getCapSpread(ex, ey, pars.strokeThickness, cap, metrics.endVector);
+                    box.l = Math.min(box.l, ss.x1, ss.x2, es.x1, es.x2);
+                    box.r = Math.max(box.r, ss.x1, ss.x2, es.x1, es.x2);
+                    box.t = Math.min(box.t, ss.y1, ss.y2, es.y1, es.y2);
+                    box.b = Math.max(box.b, ss.y1, ss.y2, es.y1, es.y2);
+                };
+                return Arc;
+            })();
+            extenders.Arc = Arc;
+            function getStartVector(x, y, cc, sx, sy) {
+                var rx = sx - x, ry = sy - y;
+                if (cc)
+                    return vec2.create(ry, -rx);
+                return vec2.create(-ry, rx);
             }
-            if (Math.abs(rx) < SMALL_EPSILON || Math.abs(ry) < SMALL_EPSILON) {
-                return;
+            function getEndVector(x, y, cc, ex, ey) {
+                var rx = ex - x, ry = ey - y;
+                if (cc)
+                    return vec2.create(ry, -rx);
+                return vec2.create(-ry, rx);
             }
-            rx = Math.abs(rx);
-            ry = Math.abs(ry);
-            var angle = rotationAngle * Math.PI / 180.0;
-            var cos_phi = Math.cos(angle);
-            var sin_phi = Math.sin(angle);
-            var dx2 = (sx - ex) / 2.0;
-            var dy2 = (sy - ey) / 2.0;
-            var x1p = cos_phi * dx2 + sin_phi * dy2;
-            var y1p = cos_phi * dy2 - sin_phi * dx2;
-            var x1p2 = x1p * x1p;
-            var y1p2 = y1p * y1p;
-            var rx2 = rx * rx;
-            var ry2 = ry * ry;
-            var lambda = (x1p2 / rx2) + (y1p2 / ry2);
-            if (lambda > 1.0) {
-                var lambda_root = Math.sqrt(lambda);
-                rx *= lambda_root;
-                ry *= lambda_root;
-                rx2 = rx * rx;
-                ry2 = ry * ry;
+            function arcContainsPoint(sx, sy, ex, ey, cpx, cpy, cc) {
+                var n = (ex - sx) * (cpy - sy) - (cpx - sx) * (ey - sy);
+                if (n === 0)
+                    return true;
+                if (n > 0 && cc)
+                    return true;
+                if (n < 0 && !cc)
+                    return true;
+                return false;
             }
-            var cxp, cyp, cx, cy;
-            var c = (rx2 * ry2) - (rx2 * y1p2) - (ry2 * x1p2);
-            var large = isLargeArcFlag === true;
-            var sweep = sweepDirectionFlag === SweepDirection.Clockwise;
-            if (c < 0.0) {
-                var scale = Math.sqrt(1.0 - c / (rx2 * ry2));
-                rx *= scale;
-                ry *= scale;
-                rx2 = rx * rx;
-                ry2 = ry * ry;
-                cxp = 0.0;
-                cyp = 0.0;
-                cx = 0.0;
-                cy = 0.0;
+            function getCapSpread(x, y, thickness, cap, vector) {
+                var hs = thickness / 2.0;
+                switch (cap) {
+                    case curve.PenLineCap.Round:
+                        return {
+                            x1: x - hs,
+                            x2: x + hs,
+                            y1: y - hs,
+                            y2: y + hs
+                        };
+                        break;
+                    case curve.PenLineCap.Square:
+                        var ed = vec2.normalize(vec2.clone(vector));
+                        var edo = vec2.orthogonal(vec2.clone(ed));
+                        return {
+                            x1: x + hs * (ed[0] + edo[0]),
+                            x2: x + hs * (ed[0] - edo[0]),
+                            y1: y + hs * (ed[1] + edo[1]),
+                            y2: y + hs * (ed[1] - edo[1])
+                        };
+                        break;
+                    case curve.PenLineCap.Flat:
+                    default:
+                        var edo = vec2.orthogonal(vec2.normalize(vec2.clone(vector)));
+                        return {
+                            x1: x + hs * edo[0],
+                            x2: x + hs * -edo[0],
+                            y1: y + hs * edo[1],
+                            y2: y + hs * -edo[1]
+                        };
+                        break;
+                }
             }
-            else {
-                c = Math.sqrt(c / ((rx2 * y1p2) + (ry2 * x1p2)));
-                if (large === sweep)
-                    c = -c;
-                cxp = c * (rx * y1p / ry);
-                cyp = c * (-ry * x1p / rx);
-                cx = cos_phi * cxp - sin_phi * cyp;
-                cy = sin_phi * cxp + cos_phi * cyp;
+        })(extenders = bounds.extenders || (bounds.extenders = {}));
+    })(bounds = curve.bounds || (curve.bounds = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
+    var bounds;
+    (function (bounds) {
+        var extenders;
+        (function (extenders) {
+            var vec2 = la.vec2;
+            var LineTo = (function () {
+                function LineTo() {
+                    this.isMove = false;
+                }
+                LineTo.prototype.init = function (sx, sy, args) {
+                    var x = args[0];
+                    var y = args[1];
+                    return {
+                        startVector: vec2.create(x - sx, y - sy),
+                        endVector: vec2.create(x - sx, y - sy),
+                        endPoint: vec2.create(x, y)
+                    };
+                };
+                LineTo.prototype.extendFillBox = function (box, sx, sy, args, metrics) {
+                    var x = args[0];
+                    var y = args[1];
+                    box.l = Math.min(box.l, x);
+                    box.r = Math.max(box.r, x);
+                    box.t = Math.min(box.t, y);
+                    box.b = Math.max(box.b, y);
+                };
+                LineTo.prototype.extendStrokeBox = function (box, sx, sy, args, metrics, pars) {
+                    this.extendFillBox(box, sx, sy, args, metrics);
+                };
+                return LineTo;
+            })();
+            extenders.LineTo = LineTo;
+        })(extenders = bounds.extenders || (bounds.extenders = {}));
+    })(bounds = curve.bounds || (curve.bounds = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
+    var bounds;
+    (function (bounds) {
+        var extenders;
+        (function (extenders) {
+            var vec2 = la.vec2;
+            var _arc = new extenders.Arc();
+            var _lineTo = new extenders.LineTo();
+            var ArcTo = (function () {
+                function ArcTo() {
+                    this.isMove = false;
+                }
+                ArcTo.prototype.init = function (sx, sy, args) {
+                    var x1 = args[0];
+                    var y1 = args[1];
+                    var x2 = args[2];
+                    var y2 = args[3];
+                    var radius = args[4];
+                    var v1 = vec2.create(x1 - sx, y1 - sy);
+                    var v2 = vec2.create(x2 - x1, y2 - y1);
+                    var inner_theta = Math.PI - vec2.angleBetween(v1, v2);
+                    var a = getTangentPoint(inner_theta, radius, vec2.create(sx, sy), v1, true);
+                    var b = getTangentPoint(inner_theta, radius, vec2.create(x1, y1), v2, false);
+                    var line = createLine(sx, sy, a[0], a[1]);
+                    var arc = createArc(a, v1, b, v2, radius);
+                    return {
+                        line: line,
+                        arc: arc,
+                        startVector: line.metrics.startVector,
+                        endVector: arc.metrics.endVector,
+                        endPoint: arc.metrics.endPoint
+                    };
+                };
+                ArcTo.prototype.extendFillBox = function (box, sx, sy, args, metrics) {
+                    _lineTo.extendFillBox(box, sx, sy, metrics.line.args, metrics.line.metrics);
+                    var ep = metrics.line.metrics.endPoint;
+                    _arc.extendFillBox(box, ep[0], ep[1], metrics.arc.args, metrics.arc.metrics);
+                };
+                ArcTo.prototype.extendStrokeBox = function (box, sx, sy, args, metrics, pars) {
+                    _lineTo.extendStrokeBox(box, sx, sy, metrics.line.args, metrics.line.metrics, pars);
+                    var ep = metrics.line.metrics.endPoint;
+                    _arc.extendStrokeBox(box, ep[0], ep[1], metrics.arc.args, metrics.arc.metrics, pars);
+                };
+                return ArcTo;
+            })();
+            extenders.ArcTo = ArcTo;
+            function createLine(sx, sy, x, y) {
+                var args = [x, y];
+                return {
+                    args: args,
+                    metrics: _lineTo.init(sx, sy, args)
+                };
             }
-            cx += (sx + ex) / 2.0;
-            cy += (sy + ey) / 2.0;
-            var at = Math.atan2(((y1p - cyp) / ry), ((x1p - cxp) / rx));
-            var theta1 = (at < 0.0) ? 2.0 * Math.PI + at : at;
-            var nat = Math.atan2(((-y1p - cyp) / ry), ((-x1p - cxp) / rx));
-            var delta_theta = (nat < at) ? 2.0 * Math.PI - at + nat : nat - at;
-            if (sweep) {
-                if (delta_theta < 0.0)
-                    delta_theta += 2.0 * Math.PI;
+            function createArc(a, v1, b, v2, radius) {
+                var c = getPerpendicularIntersections(a, v1, b, v2);
+                var cc = !la.vec2.isClockwiseTo(v1, v2);
+                var sa = Math.atan2(a[1] - c[1], a[0] - c[0]);
+                if (sa < 0)
+                    sa = (2 * Math.PI) + sa;
+                var ea = Math.atan2(b[1] - c[1], b[0] - c[0]);
+                if (ea < 0)
+                    ea = (2 * Math.PI) + ea;
+                var args = [c[0], c[1], radius, sa, ea, cc];
+                return {
+                    args: args,
+                    metrics: _arc.init(a[0], a[1], args)
+                };
             }
-            else {
-                if (delta_theta > 0.0)
-                    delta_theta -= 2.0 * Math.PI;
+            function getTangentPoint(theta, radius, s, d, invert) {
+                var len = Math.sqrt(d[0] * d[0] + d[1] * d[1]);
+                var f = radius / Math.tan(theta / 2);
+                var t = f / len;
+                if (invert)
+                    t = 1 - t;
+                return la.vec2.create(s[0] + t * d[0], s[1] + t * d[1]);
             }
-            var segment_count = Math.floor(Math.abs(delta_theta / (Math.PI / 2))) + 1;
-            var delta = delta_theta / segment_count;
-            var bcp = 4.0 / 3 * (1 - Math.cos(delta / 2)) / Math.sin(delta / 2);
-            var cos_phi_rx = cos_phi * rx;
-            var cos_phi_ry = cos_phi * ry;
-            var sin_phi_rx = sin_phi * rx;
-            var sin_phi_ry = sin_phi * ry;
-            var cos_theta1 = Math.cos(theta1);
-            var sin_theta1 = Math.sin(theta1);
-            for (var i = 0; i < segment_count; ++i) {
-                var theta2 = theta1 + delta;
-                var cos_theta2 = Math.cos(theta2);
-                var sin_theta2 = Math.sin(theta2);
-                var c1x = sx - bcp * (cos_phi_rx * sin_theta1 + sin_phi_ry * cos_theta1);
-                var c1y = sy + bcp * (cos_phi_ry * cos_theta1 - sin_phi_rx * sin_theta1);
-                var cur_ex = cx + (cos_phi_rx * cos_theta2 - sin_phi_ry * sin_theta2);
-                var cur_ey = cy + (sin_phi_rx * cos_theta2 + cos_phi_ry * sin_theta2);
-                var c2x = cur_ex + bcp * (cos_phi_rx * sin_theta2 + sin_phi_ry * cos_theta2);
-                var c2y = cur_ey + bcp * (sin_phi_rx * sin_theta2 - cos_phi_ry * cos_theta2);
-                path.bezierCurveTo(c1x, c1y, c2x, c2y, cur_ex, cur_ey);
-                sx = cur_ex;
-                sy = cur_ey;
-                theta1 = theta2;
-                cos_theta1 = cos_theta2;
-                sin_theta1 = sin_theta2;
+            function getPerpendicularIntersections(s1, d1, s2, d2) {
+                var p1 = vec2.orthogonal(vec2.clone(d1));
+                var p2 = vec2.orthogonal(vec2.clone(d2));
+                return vec2.intersection(s1, p1, s2, p2);
+            }
+        })(extenders = bounds.extenders || (bounds.extenders = {}));
+    })(bounds = curve.bounds || (curve.bounds = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
+    var bounds;
+    (function (bounds) {
+        var extenders;
+        (function (extenders) {
+            var vec2 = la.vec2;
+            var BezierCurveTo = (function () {
+                function BezierCurveTo() {
+                    this.isMove = false;
+                }
+                BezierCurveTo.prototype.init = function (sx, sy, args) {
+                    var cp1x = args[0];
+                    var cp1y = args[1];
+                    var cp2x = args[2];
+                    var cp2y = args[3];
+                    var x = args[4];
+                    var y = args[5];
+                    return {
+                        endPoint: vec2.create(x, y),
+                        startVector: vec2.create(3 * (cp1x - sx), 3 * (cp1y - sy)),
+                        endVector: vec2.create(3 * (x - cp2x), 3 * (y - cp2y))
+                    };
+                };
+                BezierCurveTo.prototype.extendFillBox = function (box, sx, sy, args, metrics) {
+                    var cp1x = args[0];
+                    var cp1y = args[1];
+                    var cp2x = args[2];
+                    var cp2y = args[3];
+                    var x = args[4];
+                    var y = args[5];
+                    var m = getMaxima(sx, cp1x, cp2x, x, sy, cp1y, cp2y, y);
+                    if (m.x[0] != null) {
+                        box.l = Math.min(box.l, m.x[0]);
+                        box.r = Math.max(box.r, m.x[0]);
+                    }
+                    if (m.x[1] != null) {
+                        box.l = Math.min(box.l, m.x[1]);
+                        box.r = Math.max(box.r, m.x[1]);
+                    }
+                    if (m.y[0] != null) {
+                        box.t = Math.min(box.t, m.y[0]);
+                        box.b = Math.max(box.b, m.y[0]);
+                    }
+                    if (m.y[1] != null) {
+                        box.t = Math.min(box.t, m.y[1]);
+                        box.b = Math.max(box.b, m.y[1]);
+                    }
+                    box.l = Math.min(box.l, x);
+                    box.r = Math.max(box.r, x);
+                    box.t = Math.min(box.t, y);
+                    box.b = Math.max(box.b, y);
+                };
+                BezierCurveTo.prototype.extendStrokeBox = function (box, sx, sy, args, metrics, pars) {
+                    var cp1x = args[0];
+                    var cp1y = args[1];
+                    var cp2x = args[2];
+                    var cp2y = args[3];
+                    var x = args[4];
+                    var y = args[5];
+                    var hs = pars.strokeThickness / 2.0;
+                    var m = getMaxima(sx, cp1x, cp2x, x, sy, cp1y, cp2y, y);
+                    if (m.x[0] != null) {
+                        box.l = Math.min(box.l, m.x[0] - hs);
+                        box.r = Math.max(box.r, m.x[0] + hs);
+                    }
+                    if (m.x[1] != null) {
+                        box.l = Math.min(box.l, m.x[1] - hs);
+                        box.r = Math.max(box.r, m.x[1] + hs);
+                    }
+                    if (m.y[0] != null) {
+                        box.t = Math.min(box.t, m.y[0] - hs);
+                        box.b = Math.max(box.b, m.y[0] + hs);
+                    }
+                    if (m.y[1] != null) {
+                        box.t = Math.min(box.t, m.y[1] - hs);
+                        box.b = Math.max(box.b, m.y[1] + hs);
+                    }
+                    box.l = Math.min(box.l, x);
+                    box.r = Math.max(box.r, x);
+                    box.t = Math.min(box.t, y);
+                    box.b = Math.max(box.b, y);
+                };
+                return BezierCurveTo;
+            })();
+            extenders.BezierCurveTo = BezierCurveTo;
+            function getMaxima(x1, x2, x3, x4, y1, y2, y3, y4) {
+                return {
+                    x: cod(x1, x2, x3, x4),
+                    y: cod(y1, y2, y3, y4)
+                };
+            }
+            function cod(a, b, c, d) {
+                var u = 2 * a - 4 * b + 2 * c;
+                var v = b - a;
+                var w = -a + 3 * b + d - 3 * c;
+                var rt = Math.sqrt(u * u - 4 * v * w);
+                var cods = [null, null];
+                if (isNaN(rt))
+                    return cods;
+                var t, ot;
+                t = (-u + rt) / (2 * w);
+                if (t >= 0 && t <= 1) {
+                    ot = 1 - t;
+                    cods[0] = (a * ot * ot * ot) + (3 * b * t * ot * ot) + (3 * c * ot * t * t) + (d * t * t * t);
+                }
+                t = (-u - rt) / (2 * w);
+                if (t >= 0 && t <= 1) {
+                    ot = 1 - t;
+                    cods[1] = (a * ot * ot * ot) + (3 * b * t * ot * ot) + (3 * c * ot * t * t) + (d * t * t * t);
+                }
+                return cods;
+            }
+        })(extenders = bounds.extenders || (bounds.extenders = {}));
+    })(bounds = curve.bounds || (curve.bounds = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
+    var bounds;
+    (function (bounds) {
+        var extenders;
+        (function (extenders) {
+            var ClosePath = (function () {
+                function ClosePath() {
+                    this.isMove = false;
+                }
+                ClosePath.prototype.init = function () {
+                    return {
+                        endPoint: undefined,
+                        startVector: undefined,
+                        endVector: undefined
+                    };
+                };
+                ClosePath.prototype.extendFillBox = function (box, sx, sy, args, metrics) {
+                };
+                ClosePath.prototype.extendStrokeBox = function (box, sx, sy, args, metrics, pars) {
+                };
+                return ClosePath;
+            })();
+            extenders.ClosePath = ClosePath;
+        })(extenders = bounds.extenders || (bounds.extenders = {}));
+    })(bounds = curve.bounds || (curve.bounds = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
+    var bounds;
+    (function (bounds) {
+        var extenders;
+        (function (extenders) {
+            var Ellipse = (function () {
+                function Ellipse() {
+                    this.isMove = false;
+                }
+                Ellipse.prototype.init = function (sx, sy, args) {
+                    return undefined;
+                };
+                Ellipse.prototype.extendFillBox = function (box, sx, sy, args, metrics) {
+                };
+                Ellipse.prototype.extendStrokeBox = function (box, sx, sy, args, metrics, pars) {
+                };
+                return Ellipse;
+            })();
+            extenders.Ellipse = Ellipse;
+        })(extenders = bounds.extenders || (bounds.extenders = {}));
+    })(bounds = curve.bounds || (curve.bounds = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
+    var bounds;
+    (function (bounds) {
+        var extenders;
+        (function (extenders) {
+            var vec2 = la.vec2;
+            var MoveTo = (function () {
+                function MoveTo() {
+                    this.isMove = true;
+                }
+                MoveTo.prototype.init = function (sx, sy, args) {
+                    var x = args[0];
+                    var y = args[1];
+                    return {
+                        startVector: null,
+                        endVector: null,
+                        endPoint: vec2.create(x, y)
+                    };
+                };
+                MoveTo.prototype.extendFillBox = function (box, sx, sy, args, metrics) {
+                    var x = args[0];
+                    var y = args[1];
+                    box.l = Math.min(box.l, x);
+                    box.r = Math.max(box.r, x);
+                    box.t = Math.min(box.t, y);
+                    box.b = Math.max(box.b, y);
+                };
+                MoveTo.prototype.extendStrokeBox = function (box, sx, sy, args, metrics, pars) {
+                    this.extendFillBox(box, sx, sy, args, metrics);
+                };
+                return MoveTo;
+            })();
+            extenders.MoveTo = MoveTo;
+        })(extenders = bounds.extenders || (bounds.extenders = {}));
+    })(bounds = curve.bounds || (curve.bounds = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
+    var bounds;
+    (function (bounds) {
+        var extenders;
+        (function (extenders) {
+            var vec2 = la.vec2;
+            var QuadraticCurveTo = (function () {
+                function QuadraticCurveTo() {
+                    this.isMove = false;
+                }
+                QuadraticCurveTo.prototype.init = function (sx, sy, args) {
+                    var cpx = args[0];
+                    var cpy = args[1];
+                    var x = args[2];
+                    var y = args[3];
+                    return {
+                        endPoint: vec2.create(x, y),
+                        startVector: vec2.create(2 * (cpx - sx), 2 * (cpy - sy)),
+                        endVector: vec2.create(2 * (x - cpx), 2 * (y - cpy))
+                    };
+                };
+                QuadraticCurveTo.prototype.extendFillBox = function (box, sx, sy, args, metrics) {
+                    var cpx = args[0];
+                    var cpy = args[1];
+                    var x = args[2];
+                    var y = args[3];
+                    var m = getMaxima(sx, cpx, x, sy, cpy, y);
+                    if (m.x != null) {
+                        box.l = Math.min(box.l, m.x);
+                        box.r = Math.max(box.r, m.x);
+                    }
+                    if (m.y != null) {
+                        box.t = Math.min(box.t, m.y);
+                        box.b = Math.max(box.b, m.y);
+                    }
+                    box.l = Math.min(box.l, x);
+                    box.r = Math.max(box.r, x);
+                    box.t = Math.min(box.t, y);
+                    box.b = Math.max(box.b, y);
+                };
+                QuadraticCurveTo.prototype.extendStrokeBox = function (box, sx, sy, args, metrics, pars) {
+                    var cpx = args[0];
+                    var cpy = args[1];
+                    var x = args[2];
+                    var y = args[3];
+                    var hs = pars.strokeThickness / 2.0;
+                    var m = getMaxima(sx, cpx, x, sy, cpy, y);
+                    if (m.x) {
+                        box.l = Math.min(box.l, m.x - hs);
+                        box.r = Math.max(box.r, m.x + hs);
+                    }
+                    if (m.y) {
+                        box.t = Math.min(box.t, m.y - hs);
+                        box.b = Math.max(box.b, m.y + hs);
+                    }
+                    box.l = Math.min(box.l, x);
+                    box.r = Math.max(box.r, x);
+                    box.t = Math.min(box.t, y);
+                    box.b = Math.max(box.b, y);
+                };
+                return QuadraticCurveTo;
+            })();
+            extenders.QuadraticCurveTo = QuadraticCurveTo;
+            function getMaxima(x1, x2, x3, y1, y2, y3) {
+                return {
+                    x: cod(x1, x2, x3),
+                    y: cod(y1, y2, y3)
+                };
+            }
+            function cod(a, b, c) {
+                var t = (a - b) / (a - 2 * b + c);
+                if (t < 0 || t > 1)
+                    return null;
+                return (a * Math.pow(1 - t, 2)) + (2 * b * (1 - t) * t) + (c * Math.pow(t, 2));
+            }
+        })(extenders = bounds.extenders || (bounds.extenders = {}));
+    })(bounds = curve.bounds || (curve.bounds = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
+    var bounds;
+    (function (bounds) {
+        var arc = new bounds.extenders.Arc();
+        var arcTo = new bounds.extenders.ArcTo();
+        var bezierCurveTo = new bounds.extenders.BezierCurveTo();
+        var closePath = new bounds.extenders.ClosePath();
+        var ellipse = new bounds.extenders.Ellipse();
+        var lineTo = new bounds.extenders.LineTo();
+        var moveTo = new bounds.extenders.MoveTo();
+        var quadraticCurveTo = new bounds.extenders.QuadraticCurveTo();
+        var ExtenderSelector = (function () {
+            function ExtenderSelector() {
+            }
+            ExtenderSelector.prototype.setFillRule = function (fillRule) {
+            };
+            ExtenderSelector.prototype.closePath = function () {
+                this.current = closePath;
+                this.args = arguments;
+            };
+            ExtenderSelector.prototype.moveTo = function (x, y) {
+                this.current = moveTo;
+                this.args = arguments;
+            };
+            ExtenderSelector.prototype.lineTo = function (x, y) {
+                this.current = lineTo;
+                this.args = arguments;
+            };
+            ExtenderSelector.prototype.bezierCurveTo = function (cp1x, cp1y, cp2x, cp2y, x, y) {
+                this.current = bezierCurveTo;
+                this.args = arguments;
+            };
+            ExtenderSelector.prototype.quadraticCurveTo = function (cpx, cpy, x, y) {
+                this.current = quadraticCurveTo;
+                this.args = arguments;
+            };
+            ExtenderSelector.prototype.arc = function (x, y, radius, startAngle, endAngle, anticlockwise) {
+                this.current = arc;
+                this.args = arguments;
+            };
+            ExtenderSelector.prototype.arcTo = function (x1, y1, x2, y2, radius) {
+                this.current = arcTo;
+                this.args = arguments;
+            };
+            ExtenderSelector.prototype.ellipse = function (x, y, radiusX, radiusY, rotation, startAngle, endAngle, antiClockwise) {
+                this.current = ellipse;
+                this.args = arguments;
+            };
+            return ExtenderSelector;
+        })();
+        bounds.ExtenderSelector = ExtenderSelector;
+    })(bounds = curve.bounds || (curve.bounds = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
+    var compiler;
+    (function (compiler_1) {
+        function compile(arg0) {
+            var compiler = PathCompiler.instance;
+            compiler.compiled.length = 0;
+            if (typeof arg0 === "string") {
+                var parser = curve.parse.getParser();
+                parser.parse(compiler, arg0);
+            }
+            else if (typeof arg0.exec === "function") {
+                arg0.exec(compiler);
+            }
+            return compiler.compiled;
+        }
+        compiler_1.compile = compile;
+        var PathCompiler = (function () {
+            function PathCompiler() {
+                this.compiled = [];
+            }
+            PathCompiler.prototype.setFillRule = function (fillRule) {
+                this.compiled.push({ t: CompiledOpType.setFillRule, a: [fillRule] });
+            };
+            PathCompiler.prototype.closePath = function () {
+                this.compiled.push({ t: CompiledOpType.closePath, a: [] });
+            };
+            PathCompiler.prototype.moveTo = function (x, y) {
+                this.compiled.push({ t: CompiledOpType.moveTo, a: [x, y] });
+            };
+            PathCompiler.prototype.lineTo = function (x, y) {
+                this.compiled.push({ t: CompiledOpType.lineTo, a: [x, y] });
+            };
+            PathCompiler.prototype.bezierCurveTo = function (cp1x, cp1y, cp2x, cp2y, x, y) {
+                this.compiled.push({ t: CompiledOpType.bezierCurveTo, a: [cp1x, cp1y, cp2x, cp2y, x, y] });
+            };
+            PathCompiler.prototype.quadraticCurveTo = function (cpx, cpy, x, y) {
+                this.compiled.push({ t: CompiledOpType.quadraticCurveTo, a: [cpx, cpy, x, y] });
+            };
+            PathCompiler.prototype.arc = function (x, y, radius, startAngle, endAngle, anticlockwise) {
+                this.compiled.push({ t: CompiledOpType.arc, a: [x, y, radius, startAngle, endAngle, anticlockwise] });
+            };
+            PathCompiler.prototype.arcTo = function (x1, y1, x2, y2, radius) {
+                this.compiled.push({ t: CompiledOpType.arcTo, a: [x1, y1, x2, y2, radius] });
+            };
+            PathCompiler.prototype.ellipse = function (x, y, radiusX, radiusY, rotation, startAngle, endAngle, antiClockwise) {
+                this.compiled.push({
+                    t: CompiledOpType.ellipse,
+                    a: [x, y, radiusX, radiusY, rotation, startAngle, endAngle, antiClockwise]
+                });
+            };
+            PathCompiler.instance = new PathCompiler();
+            return PathCompiler;
+        })();
+    })(compiler = curve.compiler || (curve.compiler = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
+    var compiler;
+    (function (compiler) {
+        function decompile(runner, compiled) {
+            for (var i = 0; !!compiled && i < compiled.length; i++) {
+                var seg = compiled[i];
+                var typeStr = void 0;
+                if (typeof seg.t !== "number" || !(typeStr = CompiledOpType[seg.t])) {
+                    console.warn("Unknown compiled path command: " + seg.t + ", " + seg.a);
+                    continue;
+                }
+                var func = runner[typeStr];
+                func && func.apply(runner, seg.a);
             }
         }
-        ellipticalArc.generate = generate;
+        compiler.decompile = decompile;
+    })(compiler = curve.compiler || (curve.compiler = {}));
+})(curve || (curve = {}));
+var CompiledOpType;
+(function (CompiledOpType) {
+    CompiledOpType[CompiledOpType["setFillRule"] = 1] = "setFillRule";
+    CompiledOpType[CompiledOpType["closePath"] = 2] = "closePath";
+    CompiledOpType[CompiledOpType["moveTo"] = 3] = "moveTo";
+    CompiledOpType[CompiledOpType["lineTo"] = 4] = "lineTo";
+    CompiledOpType[CompiledOpType["bezierCurveTo"] = 5] = "bezierCurveTo";
+    CompiledOpType[CompiledOpType["quadraticCurveTo"] = 6] = "quadraticCurveTo";
+    CompiledOpType[CompiledOpType["arc"] = 7] = "arc";
+    CompiledOpType[CompiledOpType["arcTo"] = 8] = "arcTo";
+    CompiledOpType[CompiledOpType["ellipse"] = 9] = "ellipse";
+})(CompiledOpType || (CompiledOpType = {}));
+var curve;
+(function (curve) {
+    var ellipticalArc;
+    (function (ellipticalArc) {
+        var vec2 = la.vec2;
+        var PI2 = 2 * Math.PI;
+        function genEllipse(runner, x1, y1, x2, y2, fa, fs, rx, ry, phi) {
+            if (rx === 0 || ry === 0) {
+                runner.lineTo(x2, y2);
+                return;
+            }
+            var ap = vec2.midpoint(vec2.create(x1, y1), vec2.create(x2, y2));
+            vec2.rotate(ap, -phi);
+            var rx2 = rx * rx;
+            var ry2 = ry * ry;
+            var apx2 = ap[0] * ap[0];
+            var apy2 = ap[1] * ap[1];
+            var factor = Math.sqrt(((rx2 * ry2) - (rx2 * apy2) - (ry2 * apx2)) / ((rx2 * apy2) + (ry2 * apx2)));
+            if (fa === fs) {
+                factor *= -1;
+            }
+            var cp = vec2.create(rx * ap[1] / ry, -ry * ap[0] / rx);
+            cp[0] *= factor;
+            cp[1] *= factor;
+            var c = vec2.rotate(vec2.clone(cp), phi);
+            c[0] += (x1 + x2) / 2.0;
+            c[1] += (y1 + y2) / 2.0;
+            var u = vec2.create((ap[0] - cp[0]) / rx, (ap[1] - cp[1]) / ry);
+            var v = vec2.create((-ap[0] - cp[0]) / rx, (-ap[1] - cp[1]) / ry);
+            var sa = vec2.angleBetween(vec2.create(1, 0), u);
+            var dt = vec2.angleBetween(u, v) % PI2;
+            if (fs === 0 && dt > 0) {
+                dt -= PI2;
+            }
+            else if (fs === 1 && dt < 0) {
+                dt += PI2;
+            }
+            runner.ellipse(c[0], c[1], rx, ry, phi, sa, sa + dt, (1 - fs) === 1);
+        }
+        ellipticalArc.genEllipse = genEllipse;
     })(ellipticalArc = curve.ellipticalArc || (curve.ellipticalArc = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
+    var parse;
+    (function (parse) {
+        (function (ParseStyles) {
+            ParseStyles[ParseStyles["Dom"] = 1] = "Dom";
+            ParseStyles[ParseStyles["Buffer"] = 2] = "Buffer";
+            ParseStyles[ParseStyles["CharMatching"] = 3] = "CharMatching";
+        })(parse.ParseStyles || (parse.ParseStyles = {}));
+        var ParseStyles = parse.ParseStyles;
+    })(parse = curve.parse || (curve.parse = {}));
 })(curve || (curve = {}));
 var curve;
 (function (curve) {
@@ -160,6 +806,8 @@ var curve;
         function getParser() {
             if (parse.style === parse.ParseStyles.Buffer)
                 return new parse.buffer.Parser();
+            else if (parse.style === parse.ParseStyles.Dom)
+                return new parse.dom.Parser();
             return new parse.matching.Parser();
         }
         parse.getParser = getParser;
@@ -167,737 +815,323 @@ var curve;
 })(curve || (curve = {}));
 var curve;
 (function (curve) {
-    var parse;
-    (function (parse) {
-        (function (ParseStyles) {
-            ParseStyles[ParseStyles["CharMatching"] = 2] = "CharMatching";
-            ParseStyles[ParseStyles["Buffer"] = 1] = "Buffer";
-        })(parse.ParseStyles || (parse.ParseStyles = {}));
-        var ParseStyles = parse.ParseStyles;
-    })(parse = curve.parse || (curve.parse = {}));
-})(curve || (curve = {}));
-var curve;
-(function (curve) {
-    var segments;
-    (function (segments) {
-        var Arc = (function () {
-            function Arc() {
-            }
-            Arc.prototype.draw = function (ctx, args) {
-                var x = args[0];
-                var y = args[1];
-                var radius = args[2];
-                var sa = args[3];
-                var ea = args[4];
-                var cc = args[5];
-                ctx.arc(x, y, radius, sa, ea, cc);
-            };
-            Arc.prototype.init = function (metrics, x, y, radius, sa, ea, cc) {
-                if (metrics.inited)
-                    return;
-                var sx = metrics.sx = x + (radius * Math.cos(sa));
-                var sy = metrics.sy = y + (radius * Math.sin(sa));
-                var ex = metrics.ex = x + (radius * Math.cos(ea));
-                var ey = metrics.ey = y + (radius * Math.sin(ea));
-                var l = metrics.l = x - radius;
-                metrics.cl = arcContainsPoint(sx, sy, ex, ey, l, y, cc);
-                var r = metrics.r = x + radius;
-                metrics.cr = arcContainsPoint(sx, sy, ex, ey, r, y, cc);
-                var t = metrics.t = y - radius;
-                metrics.ct = arcContainsPoint(sx, sy, ex, ey, x, t, cc);
-                var b = metrics.b = y + radius;
-                metrics.cb = arcContainsPoint(sx, sy, ex, ey, x, b, cc);
-                metrics.inited = true;
-            };
-            Arc.prototype.extendFillBox = function (box, sx, sy, args, metrics) {
-                var x = args[0];
-                var y = args[1];
-                var radius = args[2];
-                var sa = args[3];
-                var ea = args[4];
-                var cc = args[5];
-                if (ea === sa)
-                    return;
-                this.init(metrics, x, y, radius, sa, ea, cc);
-                box.l = Math.min(box.l, sx, metrics.ex);
-                box.r = Math.max(box.r, sx, metrics.ex);
-                box.t = Math.min(box.t, sy, metrics.ey);
-                box.b = Math.max(box.b, sy, metrics.ey);
-                if (metrics.cl)
-                    box.l = Math.min(box.l, metrics.l);
-                if (metrics.cr)
-                    box.r = Math.max(box.r, metrics.r);
-                if (metrics.ct)
-                    box.t = Math.min(box.t, metrics.t);
-                if (metrics.cb)
-                    box.b = Math.max(box.b, metrics.b);
-            };
-            Arc.prototype.extendStrokeBox = function (box, sx, sy, args, pars, metrics) {
-                var x = args[0];
-                var y = args[1];
-                var radius = args[2];
-                var sa = args[3];
-                var ea = args[4];
-                var cc = args[5];
-                if (ea === sa)
-                    return;
-                this.init(metrics, x, y, radius, sa, ea, cc);
-                box.l = Math.min(box.l, sx, metrics.ex);
-                box.r = Math.max(box.r, sx, metrics.ex);
-                box.t = Math.min(box.t, sy, metrics.ey);
-                box.b = Math.max(box.b, sy, metrics.ey);
-                var hs = pars.strokeThickness / 2.0;
-                if (metrics.cl)
-                    box.l = Math.min(box.l, metrics.l - hs);
-                if (metrics.cr)
-                    box.r = Math.max(box.r, metrics.r + hs);
-                if (metrics.ct)
-                    box.t = Math.min(box.t, metrics.t - hs);
-                if (metrics.cb)
-                    box.b = Math.max(box.b, metrics.b + hs);
-                var cap = pars.strokeStartLineCap || pars.strokeEndLineCap || 0;
-                var sv = this.getStartVector(metrics.sx, metrics.sy, args, metrics);
-                sv[0] = -sv[0];
-                sv[1] = -sv[1];
-                var ss = getCapSpread(sx, sy, pars.strokeThickness, cap, sv);
-                var ev = this.getEndVector(metrics.sx, metrics.sy, args, metrics);
-                var es = getCapSpread(metrics.ex, metrics.ey, pars.strokeThickness, cap, ev);
-                box.l = Math.min(box.l, ss.x1, ss.x2, es.x1, es.x2);
-                box.r = Math.max(box.r, ss.x1, ss.x2, es.x1, es.x2);
-                box.t = Math.min(box.t, ss.y1, ss.y2, es.y1, es.y2);
-                box.b = Math.max(box.b, ss.y1, ss.y2, es.y1, es.y2);
-            };
-            Arc.prototype.getStartVector = function (sx, sy, args, metrics) {
-                var x = args[0];
-                var y = args[1];
-                var radius = args[2];
-                var sa = args[3];
-                var ea = args[4];
-                var cc = args[5];
-                this.init(metrics, x, y, radius, sa, ea, cc);
-                var rv = [
-                    sx - x,
-                    sy - y
-                ];
-                if (cc)
-                    return [rv[1], -rv[0]];
-                return [-rv[1], rv[0]];
-            };
-            Arc.prototype.getEndVector = function (sx, sy, args, metrics) {
-                var x = args[0];
-                var y = args[1];
-                var radius = args[2];
-                var sa = args[3];
-                var ea = args[4];
-                var cc = args[5];
-                this.init(metrics, x, y, radius, sa, ea, cc);
-                var rv = [
-                    metrics.ex - x,
-                    metrics.ey - y
-                ];
-                if (cc)
-                    return [rv[1], -rv[0]];
-                return [-rv[1], rv[0]];
-            };
-            return Arc;
-        })();
-        segments.Arc = Arc;
-        function arcContainsPoint(sx, sy, ex, ey, cpx, cpy, cc) {
-            var n = (ex - sx) * (cpy - sy) - (cpx - sx) * (ey - sy);
-            if (n === 0)
-                return true;
-            if (n > 0 && cc)
-                return true;
-            if (n < 0 && !cc)
-                return true;
-            return false;
-        }
-        function getCapSpread(x, y, thickness, cap, vector) {
-            var hs = thickness / 2.0;
-            switch (cap) {
-                case curve.PenLineCap.Round:
-                    return {
-                        x1: x - hs,
-                        x2: x + hs,
-                        y1: y - hs,
-                        y2: y + hs
-                    };
-                    break;
-                case curve.PenLineCap.Square:
-                    var ed = normalizeVector(vector);
-                    var edo = perpendicularVector(ed);
-                    return {
-                        x1: x + hs * (ed[0] + edo[0]),
-                        x2: x + hs * (ed[0] - edo[0]),
-                        y1: y + hs * (ed[1] + edo[1]),
-                        y2: y + hs * (ed[1] - edo[1])
-                    };
-                    break;
-                case curve.PenLineCap.Flat:
-                default:
-                    var ed = normalizeVector(vector);
-                    var edo = perpendicularVector(ed);
-                    return {
-                        x1: x + hs * edo[0],
-                        x2: x + hs * -edo[0],
-                        y1: y + hs * edo[1],
-                        y2: y + hs * -edo[1]
-                    };
-                    break;
-            }
-        }
-        function normalizeVector(v) {
-            var len = Math.sqrt(v[0] * v[0] + v[1] * v[1]);
-            return [
-                v[0] / len,
-                v[1] / len
-            ];
-        }
-        function perpendicularVector(v) {
-            return [
-                -v[1],
-                v[0]
-            ];
-        }
-    })(segments = curve.segments || (curve.segments = {}));
-})(curve || (curve = {}));
-var curve;
-(function (curve) {
-    var segments;
-    (function (segments) {
-        var LineTo = (function () {
-            function LineTo() {
-            }
-            LineTo.prototype.draw = function (ctx, args) {
-                var x = args[0];
-                var y = args[1];
-                ctx.lineTo(x, y);
-            };
-            LineTo.prototype.extendFillBox = function (box, sx, sy, args) {
-                var x = args[0];
-                var y = args[1];
-                box.l = Math.min(box.l, x);
-                box.r = Math.max(box.r, x);
-                box.t = Math.min(box.t, y);
-                box.b = Math.max(box.b, y);
-            };
-            LineTo.prototype.extendStrokeBox = function (box, sx, sy, args, pars) {
-                this.extendFillBox(box, sx, sy, args);
-            };
-            LineTo.prototype.getStartVector = function (sx, sy, args) {
-                return [
-                    args[0] - sx,
-                    args[1] - sy
-                ];
-            };
-            LineTo.prototype.getEndVector = function (sx, sy, args) {
-                return [
-                    args[0] - sx,
-                    args[1] - sy
-                ];
-            };
-            return LineTo;
-        })();
-        segments.LineTo = LineTo;
-    })(segments = curve.segments || (curve.segments = {}));
-})(curve || (curve = {}));
-var curve;
-(function (curve) {
-    var segments;
-    (function (segments) {
-        var _arc = new segments.Arc();
-        var _lineTo = new segments.LineTo();
-        var ArcTo = (function () {
-            function ArcTo() {
-            }
-            ArcTo.prototype.draw = function (ctx, args) {
-                var x1 = args[0];
-                var y1 = args[1];
-                var x2 = args[2];
-                var y2 = args[3];
-                var radius = args[4];
-                ctx.arcTo(x1, y1, x2, y2, radius);
-            };
-            ArcTo.prototype.init = function (metrics, sx, sy, args) {
-                if (metrics.inited || sx !== metrics.sx || sy !== metrics.sy)
-                    return;
-                metrics.sx = sx;
-                metrics.sy = sy;
-                var x1 = args[0];
-                var y1 = args[1];
-                var x2 = args[2];
-                var y2 = args[3];
-                var radius = args[4];
-                var v1 = la.vec2.create(x1 - sx, y1 - sy);
-                var v2 = la.vec2.create(x2 - x1, y2 - y1);
-                var inner_theta = Math.PI - la.vec2.angleBetween(v1, v2);
-                var a = getTangentPoint(inner_theta, radius, la.vec2.create(sx, sy), v1, true);
-                var b = getTangentPoint(inner_theta, radius, la.vec2.create(x1, y1), v2, false);
-                metrics.line = {
-                    args: [a[0], a[1]]
+    var bounds;
+    (function (bounds) {
+        var fill;
+        (function (fill) {
+            var FillBounds = (function () {
+                function FillBounds(path) {
+                    this.l = 0;
+                    this.t = 0;
+                    this.r = 0;
+                    this.b = 0;
+                    this.$calc = false;
+                    Object.defineProperties(this, {
+                        "path": { value: path, writable: false }
+                    });
+                }
+                FillBounds.prototype.ensure = function () {
+                    if (!this.$calc)
+                        this.calculate();
+                    return this;
                 };
-                metrics.arc = createArc(a, v1, b, v2, radius);
-                metrics.inited = true;
+                FillBounds.prototype.calculate = function () {
+                    var _this = this;
+                    this.$calc = false;
+                    this.l = Number.POSITIVE_INFINITY;
+                    this.t = Number.POSITIVE_INFINITY;
+                    this.r = Number.NEGATIVE_INFINITY;
+                    this.b = Number.NEGATIVE_INFINITY;
+                    var sx, sy;
+                    var selector = new bounds.ExtenderSelector();
+                    this.path.exec(selector, function () {
+                        var cur = selector.current;
+                        var metrics = cur.init(sx, sy, selector.args);
+                        cur.extendFillBox(_this, sx, sy, selector.args, metrics);
+                        sx = metrics.endPoint[0];
+                        sy = metrics.endPoint[1];
+                    });
+                    this.$calc = true;
+                    return this;
+                };
+                return FillBounds;
+            })();
+            fill.FillBounds = FillBounds;
+        })(fill = bounds.fill || (bounds.fill = {}));
+    })(bounds = curve.bounds || (curve.bounds = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
+    (function (PenLineCap) {
+        PenLineCap[PenLineCap["Flat"] = 0] = "Flat";
+        PenLineCap[PenLineCap["Square"] = 1] = "Square";
+        PenLineCap[PenLineCap["Round"] = 2] = "Round";
+        PenLineCap[PenLineCap["Triangle"] = 3] = "Triangle";
+    })(curve.PenLineCap || (curve.PenLineCap = {}));
+    var PenLineCap = curve.PenLineCap;
+    (function (PenLineJoin) {
+        PenLineJoin[PenLineJoin["Miter"] = 0] = "Miter";
+        PenLineJoin[PenLineJoin["Bevel"] = 1] = "Bevel";
+        PenLineJoin[PenLineJoin["Round"] = 2] = "Round";
+    })(curve.PenLineJoin || (curve.PenLineJoin = {}));
+    var PenLineJoin = curve.PenLineJoin;
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
+    var bounds;
+    (function (bounds) {
+        var stroke;
+        (function (stroke) {
+            var vec2 = la.vec2;
+            function extendEndCap(box, metrics, pars) {
+                var cap = pars.strokeStartLineCap || pars.strokeEndLineCap || 0;
+                var func = cappers[cap] || cappers[curve.PenLineCap.Flat];
+                func(box, metrics, pars.strokeThickness);
+            }
+            stroke.extendEndCap = extendEndCap;
+            var cappers = [];
+            cappers[curve.PenLineCap.Round] = function (box, metrics, thickness) {
+                var _a = metrics.endPoint, ex = _a[0], ey = _a[1];
+                var hs = thickness / 2.0;
+                box.l = Math.min(box.l, ex - hs);
+                box.r = Math.max(box.r, ex + hs);
+                box.t = Math.min(box.t, ey - hs);
+                box.b = Math.max(box.b, ey + hs);
             };
-            ArcTo.prototype.extendFillBox = function (box, sx, sy, args, metrics) {
-                this.init(metrics, sx, sy, args);
-                box.l = Math.min(box.l, sx);
-                box.r = Math.max(box.r, sx);
-                box.t = Math.min(box.t, sy);
-                box.b = Math.max(box.b, sy);
-                var mline = metrics.line, marc = metrics.arc;
-                _lineTo.extendFillBox(box, mline.sx, mline.sy, mline.args);
-                _arc.extendFillBox(box, marc.sx, marc.sy, marc.args, marc.metrics);
+            cappers[curve.PenLineCap.Square] = function (box, metrics, thickness) {
+                var ed = vec2.clone(metrics.endVector);
+                if (!ed || !ed[0] || !ed[1])
+                    return;
+                vec2.normalize(ed);
+                var edo = vec2.orthogonal(vec2.clone(ed));
+                var _a = metrics.endPoint, ex = _a[0], ey = _a[1];
+                var hs = thickness / 2.0;
+                var x1 = ex + hs * (ed[0] + edo[0]);
+                var x2 = ex + hs * (ed[0] - edo[0]);
+                var y1 = ey + hs * (ed[1] + edo[1]);
+                var y2 = ey + hs * (ed[1] - edo[1]);
+                box.l = Math.min(box.l, x1, x2);
+                box.r = Math.max(box.r, x1, x2);
+                box.t = Math.min(box.t, y1, y2);
+                box.b = Math.max(box.b, y1, y2);
             };
-            ArcTo.prototype.extendStrokeBox = function (box, sx, sy, args, pars, metrics) {
-                this.init(metrics, sx, sy, args);
-                var hs = pars.strokeThickness / 2;
+            cappers[curve.PenLineCap.Flat] = function (box, metrics, thickness) {
+                var edo = vec2.clone(metrics.endVector);
+                if (!edo || !edo[0] || !edo[1])
+                    return;
+                vec2.orthogonal(vec2.normalize(edo));
+                var _a = metrics.endPoint, ex = _a[0], ey = _a[1];
+                var hs = thickness / 2.0;
+                var x1 = ex + hs * edo[0];
+                var x2 = ex + hs * -edo[0];
+                var y1 = ey + hs * edo[1];
+                var y2 = ey + hs * -edo[1];
+                box.l = Math.min(box.l, x1, x2);
+                box.r = Math.max(box.r, x1, x2);
+                box.t = Math.min(box.t, y1, y2);
+                box.b = Math.max(box.b, y1, y2);
+            };
+        })(stroke = bounds.stroke || (bounds.stroke = {}));
+    })(bounds = curve.bounds || (curve.bounds = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
+    var bounds;
+    (function (bounds) {
+        var stroke;
+        (function (stroke) {
+            var vec2 = la.vec2;
+            function extendLineJoin(box, sx, sy, metrics, lastMetrics, pars) {
+                var hs = pars.strokeThickness / 2.0;
+                if (pars.strokeLineJoin === curve.PenLineJoin.Round) {
+                    box.l = Math.min(box.l, sx - hs);
+                    box.r = Math.max(box.r, sx + hs);
+                    box.t = Math.min(box.t, sy - hs);
+                    box.b = Math.max(box.b, sy + hs);
+                    return;
+                }
+                var tips = (pars.strokeLineJoin === curve.PenLineJoin.Miter)
+                    ? findMiterTips(sx, sy, metrics, lastMetrics, hs, pars.strokeMiterLimit)
+                    : findBevelTips(sx, sy, metrics, lastMetrics, hs);
+                if (!tips)
+                    return;
+                var x1 = tips[0][0], y1 = tips[0][1], x2 = tips[1][0], y2 = tips[1][1];
+                box.l = Math.min(box.l, x1, x2);
+                box.r = Math.max(box.r, x1, x2);
+                box.t = Math.min(box.t, y1, y2);
+                box.b = Math.max(box.b, y1, y2);
+            }
+            stroke.extendLineJoin = extendLineJoin;
+            function findMiterTips(sx, sy, metrics, lastMetrics, hs, miterLimit) {
+                var av = vec2.clone(lastMetrics.endVector);
+                var bv = vec2.clone(metrics.startVector);
+                if (!av || !bv)
+                    return null;
+                vec2.reverse(av);
+                var tau = vec2.angleBetween(av, bv) / 2;
+                if (isNaN(tau))
+                    return null;
+                var miterRatio = 1 / Math.sin(tau);
+                if (miterRatio > miterLimit)
+                    return findBevelTips(sx, sy, metrics, lastMetrics, hs);
+                var cv = vec2.isClockwiseTo(av, bv) ? vec2.clone(av) : vec2.clone(bv);
+                vec2.normalize(vec2.reverse(vec2.rotate(cv, tau)));
+                var miterLen = hs * miterRatio;
+                var tip = vec2.create(sx + miterLen * cv[0], sy + miterLen * cv[1]);
+                return [tip, tip];
+            }
+            function findBevelTips(sx, sy, metrics, lastMetrics, hs) {
+                var av = vec2.clone(lastMetrics.endVector);
+                var bv = vec2.clone(metrics.startVector);
+                if (!av || !bv)
+                    return;
+                vec2.normalize(vec2.reverse(av));
+                vec2.normalize(bv);
+                var avo = vec2.clone(av), bvo = vec2.clone(bv);
+                if (vec2.isClockwiseTo(av, bv)) {
+                    avo = vec2.orthogonal(av);
+                    bvo = vec2.reverse(vec2.orthogonal(bv));
+                }
+                else {
+                    avo = vec2.reverse(vec2.orthogonal(av));
+                    bvo = vec2.orthogonal(bv);
+                }
+                return [
+                    vec2.create(sx - hs * avo[0], sy - hs * avo[1]),
+                    vec2.create(sx - hs * bvo[0], sy - hs * bvo[1])
+                ];
+            }
+        })(stroke = bounds.stroke || (bounds.stroke = {}));
+    })(bounds = curve.bounds || (curve.bounds = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
+    var bounds;
+    (function (bounds) {
+        var stroke;
+        (function (stroke) {
+            var vec2 = la.vec2;
+            function extendStartCap(box, sx, sy, metrics, pars) {
+                var cap = pars.strokeStartLineCap || pars.strokeEndLineCap || 0;
+                var func = cappers[cap] || cappers[curve.PenLineCap.Flat];
+                func(box, sx, sy, metrics, pars.strokeThickness);
+            }
+            stroke.extendStartCap = extendStartCap;
+            var cappers = [];
+            cappers[curve.PenLineCap.Round] = function (box, sx, sy, metrics, thickness) {
+                var hs = thickness / 2.0;
                 box.l = Math.min(box.l, sx - hs);
                 box.r = Math.max(box.r, sx + hs);
                 box.t = Math.min(box.t, sy - hs);
                 box.b = Math.max(box.b, sy + hs);
-                var mline = metrics.line, marc = metrics.arc;
-                _lineTo.extendStrokeBox(box, mline.sx, mline.sy, mline.args, pars);
-                _arc.extendStrokeBox(box, marc.sx, marc.sy, marc.args, marc.metrics, pars);
             };
-            ArcTo.prototype.getStartVector = function (sx, sy, args, metrics) {
-                this.init(metrics, sx, sy, args);
-                return _lineTo.getStartVector(sx, sy, metrics.line.args);
+            cappers[curve.PenLineCap.Square] = function (box, sx, sy, metrics, thickness) {
+                var sd = vec2.clone(metrics.startVector);
+                if (!sd || !sd[0] || !sd[1])
+                    return;
+                vec2.reverse(vec2.normalize(sd));
+                var sdo = vec2.orthogonal(vec2.clone(sd));
+                var hs = thickness / 2.0;
+                var x1 = sx + hs * (sd[0] + sdo[0]);
+                var x2 = sx + hs * (sd[0] - sdo[0]);
+                var y1 = sy + hs * (sd[1] + sdo[1]);
+                var y2 = sy + hs * (sd[1] - sdo[1]);
+                box.l = Math.min(box.l, x1, x2);
+                box.r = Math.max(box.r, x1, x2);
+                box.t = Math.min(box.t, y1, y2);
+                box.b = Math.max(box.b, y1, y2);
             };
-            ArcTo.prototype.getEndVector = function (sx, sy, args, metrics) {
-                this.init(metrics, sx, sy, args);
-                var marc = metrics.arc;
-                return _arc.getEndVector(marc.sx, marc.sy, marc.args, marc.metrics);
+            cappers[curve.PenLineCap.Flat] = function (box, sx, sy, metrics, thickness) {
+                var sdo = vec2.clone(metrics.startVector);
+                if (!sdo || !sdo[0] || !sdo[1])
+                    return;
+                vec2.orthogonal(vec2.normalize(sdo));
+                var hs = thickness / 2.0;
+                var x1 = sx + hs * sdo[0];
+                var x2 = sx + hs * -sdo[0];
+                var y1 = sy + hs * sdo[1];
+                var y2 = sy + hs * -sdo[1];
+                box.l = Math.min(box.l, x1, x2);
+                box.r = Math.max(box.r, x1, x2);
+                box.t = Math.min(box.t, y1, y2);
+                box.b = Math.max(box.b, y1, y2);
             };
-            return ArcTo;
-        })();
-        segments.ArcTo = ArcTo;
-        function createArc(a, v1, b, v2, radius) {
-            var c = getPerpendicularIntersections(a, v1, b, v2);
-            var cc = !la.vec2.isClockwiseTo(v1, v2);
-            var sa = Math.atan2(a[1] - c[1], a[0] - c[0]);
-            if (sa < 0)
-                sa = (2 * Math.PI) + sa;
-            var ea = Math.atan2(b[1] - c[1], b[0] - c[0]);
-            if (ea < 0)
-                ea = (2 * Math.PI) + ea;
-            return {
-                sx: a[0],
-                sy: a[1],
-                args: [c[0], c[1], radius, sa, ea, cc],
-                metrics: {}
-            };
-        }
-        function getTangentPoint(theta, radius, s, d, invert) {
-            var len = Math.sqrt(d[0] * d[0] + d[1] * d[1]);
-            var f = radius / Math.tan(theta / 2);
-            var t = f / len;
-            if (invert)
-                t = 1 - t;
-            return la.vec2.create(s[0] + t * d[0], s[1] + t * d[1]);
-        }
-        function getPerpendicularIntersections(s1, d1, s2, d2) {
-            var p1 = la.vec2.orthogonal(la.vec2.create(d1[0], d1[2]));
-            var p2 = la.vec2.orthogonal(la.vec2.create(d2[0], d2[2]));
-            return la.vec2.intersection(s1, p1, s2, p2);
-        }
-    })(segments = curve.segments || (curve.segments = {}));
+        })(stroke = bounds.stroke || (bounds.stroke = {}));
+    })(bounds = curve.bounds || (curve.bounds = {}));
 })(curve || (curve = {}));
 var curve;
 (function (curve) {
-    var segments;
-    (function (segments) {
-        var BezierCurveTo = (function () {
-            function BezierCurveTo() {
-            }
-            BezierCurveTo.prototype.draw = function (ctx, args) {
-                var cp1x = args[0];
-                var cp1y = args[1];
-                var cp2x = args[2];
-                var cp2y = args[3];
-                var x = args[4];
-                var y = args[5];
-                ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y);
-            };
-            BezierCurveTo.prototype.extendFillBox = function (box, sx, sy, args) {
-                var cp1x = args[0];
-                var cp1y = args[1];
-                var cp2x = args[2];
-                var cp2y = args[3];
-                var x = args[4];
-                var y = args[5];
-                var m = getMaxima(sx, cp1x, cp2x, x, sy, cp1y, cp2y, y);
-                if (m.x[0] != null) {
-                    box.l = Math.min(box.l, m.x[0]);
-                    box.r = Math.max(box.r, m.x[0]);
+    var bounds;
+    (function (bounds) {
+        var stroke;
+        (function (stroke) {
+            var StartCapExtender = (function () {
+                function StartCapExtender() {
                 }
-                if (m.x[1] != null) {
-                    box.l = Math.min(box.l, m.x[1]);
-                    box.r = Math.max(box.r, m.x[1]);
-                }
-                if (m.y[0] != null) {
-                    box.t = Math.min(box.t, m.y[0]);
-                    box.b = Math.max(box.b, m.y[0]);
-                }
-                if (m.y[1] != null) {
-                    box.t = Math.min(box.t, m.y[1]);
-                    box.b = Math.max(box.b, m.y[1]);
-                }
-                box.l = Math.min(box.l, x);
-                box.r = Math.max(box.r, x);
-                box.t = Math.min(box.t, y);
-                box.b = Math.max(box.b, y);
-            };
-            BezierCurveTo.prototype.extendStrokeBox = function (box, sx, sy, args, pars) {
-                var cp1x = args[0];
-                var cp1y = args[1];
-                var cp2x = args[2];
-                var cp2y = args[3];
-                var x = args[4];
-                var y = args[5];
-                var hs = pars.strokeThickness / 2.0;
-                var m = getMaxima(sx, cp1x, cp2x, x, sy, cp1y, cp2y, y);
-                if (m.x[0] != null) {
-                    box.l = Math.min(box.l, m.x[0] - hs);
-                    box.r = Math.max(box.r, m.x[0] + hs);
-                }
-                if (m.x[1] != null) {
-                    box.l = Math.min(box.l, m.x[1] - hs);
-                    box.r = Math.max(box.r, m.x[1] + hs);
-                }
-                if (m.y[0] != null) {
-                    box.t = Math.min(box.t, m.y[0] - hs);
-                    box.b = Math.max(box.b, m.y[0] + hs);
-                }
-                if (m.y[1] != null) {
-                    box.t = Math.min(box.t, m.y[1] - hs);
-                    box.b = Math.max(box.b, m.y[1] + hs);
-                }
-                box.l = Math.min(box.l, x);
-                box.r = Math.max(box.r, x);
-                box.t = Math.min(box.t, y);
-                box.b = Math.max(box.b, y);
-            };
-            BezierCurveTo.prototype.getStartVector = function (sx, sy, args) {
-                var cp1x = args[0];
-                var cp1y = args[1];
-                return [
-                    3 * (cp1x - sx),
-                    3 * (cp1y - sy)
-                ];
-            };
-            BezierCurveTo.prototype.getEndVector = function (sx, sy, args) {
-                var cp2x = args[2];
-                var cp2y = args[3];
-                var x = args[4];
-                var y = args[5];
-                return [
-                    3 * (x - cp2x),
-                    3 * (y - cp2y)
-                ];
-            };
-            return BezierCurveTo;
-        })();
-        segments.BezierCurveTo = BezierCurveTo;
-        function getMaxima(x1, x2, x3, x4, y1, y2, y3, y4) {
-            return {
-                x: cod(x1, x2, x3, x4),
-                y: cod(y1, y2, y3, y4)
-            };
-        }
-        function cod(a, b, c, d) {
-            var u = 2 * a - 4 * b + 2 * c;
-            var v = b - a;
-            var w = -a + 3 * b + d - 3 * c;
-            var rt = Math.sqrt(u * u - 4 * v * w);
-            var cods = [null, null];
-            if (isNaN(rt))
-                return cods;
-            var t, ot;
-            t = (-u + rt) / (2 * w);
-            if (t >= 0 && t <= 1) {
-                ot = 1 - t;
-                cods[0] = (a * ot * ot * ot) + (3 * b * t * ot * ot) + (3 * c * ot * t * t) + (d * t * t * t);
-            }
-            t = (-u - rt) / (2 * w);
-            if (t >= 0 && t <= 1) {
-                ot = 1 - t;
-                cods[1] = (a * ot * ot * ot) + (3 * b * t * ot * ot) + (3 * c * ot * t * t) + (d * t * t * t);
-            }
-            return cods;
-        }
-    })(segments = curve.segments || (curve.segments = {}));
+                StartCapExtender.prototype.extend = function () {
+                };
+                return StartCapExtender;
+            })();
+            stroke.StartCapExtender = StartCapExtender;
+        })(stroke = bounds.stroke || (bounds.stroke = {}));
+    })(bounds = curve.bounds || (curve.bounds = {}));
 })(curve || (curve = {}));
 var curve;
 (function (curve) {
-    var segments;
-    (function (segments) {
-        var ClosePath = (function () {
-            function ClosePath() {
-            }
-            ClosePath.prototype.draw = function (ctx, args) {
-                ctx.closePath();
-            };
-            ClosePath.prototype.extendFillBox = function (box, sx, sy, args) {
-            };
-            ClosePath.prototype.extendStrokeBox = function (box, sx, sy, args, pars) {
-            };
-            ClosePath.prototype.getStartVector = function (sx, sy, args) {
-                return undefined;
-            };
-            ClosePath.prototype.getEndVector = function (sx, sy, args) {
-                return undefined;
-            };
-            return ClosePath;
-        })();
-        segments.ClosePath = ClosePath;
-    })(segments = curve.segments || (curve.segments = {}));
-})(curve || (curve = {}));
-var curve;
-(function (curve) {
-    var segments;
-    (function (segments) {
-        var Ellipse = (function () {
-            function Ellipse() {
-            }
-            Ellipse.prototype.draw = function (ctx, args) {
-                var x = args[0];
-                var y = args[1];
-                var rx = args[2];
-                var ry = args[3];
-                var rotation = args[4];
-                var sa = args[5];
-                var ea = args[6];
-                var ac = args[7];
-                ctx.ellipse(x, y, rx, ry, rotation, sa, ea, ac);
-            };
-            Ellipse.prototype.extendFillBox = function (box, sx, sy, args, metrics) {
-                var x = args[0];
-                var y = args[1];
-                var rx = args[2];
-                var ry = args[3];
-                var rotation = args[4];
-                var sa = args[5];
-                var ea = args[6];
-                var ac = args[7] === true;
-                console.warn("extendFillBox", "Currently not accounting for rotation or start/end angle.");
-                box.l = Math.min(box.l, x);
-                box.r = Math.max(box.r, x + rx + rx);
-                box.t = Math.min(box.t, y);
-                box.b = Math.max(box.b, y + ry + ry);
-            };
-            Ellipse.prototype.extendStrokeBox = function (box, sx, sy, args, pars, metrics) {
-                var x = args[0];
-                var y = args[1];
-                var rx = args[2];
-                var ry = args[3];
-                var rotation = args[4];
-                var sa = args[5];
-                var ea = args[6];
-                var ac = args[7] === true;
-                console.warn("extendStrokeBox", "Currently not accounting for rotation or start/end angle.");
-                var hs = pars.strokeThickness / 2.0;
-                box.l = Math.min(box.l, x - hs);
-                box.r = Math.max(box.r, x + rx + rx + hs);
-                box.t = Math.min(box.t, y - hs);
-                box.b = Math.max(box.b, y + ry + ry + hs);
-            };
-            Ellipse.prototype.getStartVector = function (sx, sy, args, metrics) {
-                console.warn("getStartVector", "Currently not accounting for rotation or start/end angle.");
-                return undefined;
-            };
-            Ellipse.prototype.getEndVector = function (sx, sy, args, metrics) {
-                console.warn("getEndVector", "Currently not accounting for rotation or start/end angle.");
-                return undefined;
-            };
-            return Ellipse;
-        })();
-        segments.Ellipse = Ellipse;
-    })(segments = curve.segments || (curve.segments = {}));
-})(curve || (curve = {}));
-var curve;
-(function (curve) {
-    var segments;
-    (function (segments) {
-        var MoveTo = (function () {
-            function MoveTo() {
-            }
-            MoveTo.prototype.draw = function (ctx, args) {
-                var x = args[0];
-                var y = args[1];
-                ctx.moveTo(x, y);
-            };
-            MoveTo.prototype.extendFillBox = function (box, sx, sy, args) {
-                var x = args[0];
-                var y = args[1];
-                box.l = Math.min(box.l, x);
-                box.r = Math.max(box.r, x);
-                box.t = Math.min(box.t, y);
-                box.b = Math.max(box.b, y);
-            };
-            MoveTo.prototype.extendStrokeBox = function (box, sx, sy, args, pars) {
-                this.extendFillBox(box, sx, sy, args);
-            };
-            MoveTo.prototype.getStartVector = function (sx, sy, args) {
-                return undefined;
-            };
-            MoveTo.prototype.getEndVector = function (sx, sy, args) {
-                return undefined;
-            };
-            return MoveTo;
-        })();
-        segments.MoveTo = MoveTo;
-    })(segments = curve.segments || (curve.segments = {}));
-})(curve || (curve = {}));
-var curve;
-(function (curve) {
-    var segments;
-    (function (segments) {
-        var QuadraticCurveTo = (function () {
-            function QuadraticCurveTo() {
-            }
-            QuadraticCurveTo.prototype.draw = function (ctx, args) {
-                var cpx = args[0];
-                var cpy = args[1];
-                var x = args[2];
-                var y = args[3];
-                ctx.quadraticCurveTo(cpx, cpy, x, y);
-            };
-            QuadraticCurveTo.prototype.extendFillBox = function (box, sx, sy, args) {
-                var cpx = args[0];
-                var cpy = args[1];
-                var x = args[2];
-                var y = args[3];
-                var m = getMaxima(sx, cpx, x, sy, cpy, y);
-                if (m.x != null) {
-                    box.l = Math.min(box.l, m.x);
-                    box.r = Math.max(box.r, m.x);
+    var bounds;
+    (function (bounds) {
+        var stroke;
+        (function (stroke) {
+            var StrokeBounds = (function () {
+                function StrokeBounds(path) {
+                    this.l = 0;
+                    this.t = 0;
+                    this.r = 0;
+                    this.b = 0;
+                    this.$calc = false;
+                    Object.defineProperties(this, {
+                        "path": { value: path, writable: false }
+                    });
                 }
-                if (m.y != null) {
-                    box.t = Math.min(box.t, m.y);
-                    box.b = Math.max(box.b, m.y);
-                }
-                box.l = Math.min(box.l, x);
-                box.r = Math.max(box.r, x);
-                box.t = Math.min(box.t, y);
-                box.b = Math.max(box.b, y);
-            };
-            QuadraticCurveTo.prototype.extendStrokeBox = function (box, sx, sy, args, pars) {
-                var cpx = args[0];
-                var cpy = args[1];
-                var x = args[2];
-                var y = args[3];
-                var hs = pars.strokeThickness / 2.0;
-                var m = getMaxima(sx, cpx, x, sy, cpy, y);
-                if (m.x) {
-                    box.l = Math.min(box.l, m.x - hs);
-                    box.r = Math.max(box.r, m.x + hs);
-                }
-                if (m.y) {
-                    box.t = Math.min(box.t, m.y - hs);
-                    box.b = Math.max(box.b, m.y + hs);
-                }
-                box.l = Math.min(box.l, x);
-                box.r = Math.max(box.r, x);
-                box.t = Math.min(box.t, y);
-                box.b = Math.max(box.b, y);
-            };
-            QuadraticCurveTo.prototype.getStartVector = function (sx, sy, args) {
-                var cpx = args[0];
-                var cpy = args[1];
-                return [
-                    2 * (cpx - sx),
-                    2 * (cpy - sy)
-                ];
-            };
-            QuadraticCurveTo.prototype.getEndVector = function (sx, sy, args) {
-                var cpx = args[0];
-                var cpy = args[1];
-                var x = args[2];
-                var y = args[3];
-                return [
-                    2 * (x - cpx),
-                    2 * (y - cpy)
-                ];
-            };
-            return QuadraticCurveTo;
-        })();
-        segments.QuadraticCurveTo = QuadraticCurveTo;
-        function getMaxima(x1, x2, x3, y1, y2, y3) {
-            return {
-                x: cod(x1, x2, x3),
-                y: cod(y1, y2, y3)
-            };
-        }
-        function cod(a, b, c) {
-            var t = (a - b) / (a - 2 * b + c);
-            if (t < 0 || t > 1)
-                return null;
-            return (a * Math.pow(1 - t, 2)) + (2 * b * (1 - t) * t) + (c * Math.pow(t, 2));
-        }
-    })(segments = curve.segments || (curve.segments = {}));
-})(curve || (curve = {}));
-var curve;
-(function (curve) {
-    var segments;
-    (function (segments) {
-        var Rect = (function () {
-            function Rect() {
-            }
-            Rect.prototype.draw = function (ctx, args) {
-                var x = args[0];
-                var y = args[1];
-                var w = args[2];
-                var h = args[3];
-                ctx.rect(x, y, w, h);
-            };
-            Rect.prototype.extendFillBox = function (box, sx, sy, args, metrics) {
-                var x = args[0];
-                var y = args[1];
-                var w = args[2];
-                var h = args[3];
-                box.l = Math.min(box.l, x);
-                box.r = Math.max(box.r, x + w);
-                box.t = Math.min(box.t, y);
-                box.b = Math.max(box.b, y + h);
-            };
-            Rect.prototype.extendStrokeBox = function (box, sx, sy, args, pars, metrics) {
-                var x = args[0];
-                var y = args[1];
-                var w = args[2];
-                var h = args[3];
-                var hs = pars.strokeThickness / 2.0;
-                box.l = Math.min(box.l, x - hs);
-                box.r = Math.max(box.r, x + w + hs);
-                box.t = Math.min(box.t, y - hs);
-                box.b = Math.max(box.b, y + h + hs);
-            };
-            Rect.prototype.getStartVector = function (sx, sy, args, metrics) {
-                return undefined;
-            };
-            Rect.prototype.getEndVector = function (sx, sy, args, metrics) {
-                return undefined;
-            };
-            return Rect;
-        })();
-        segments.Rect = Rect;
-    })(segments = curve.segments || (curve.segments = {}));
-})(curve || (curve = {}));
-var curve;
-(function (curve) {
-    var segments;
-    (function (segments) {
-        segments.all = [];
-        segments.all[PathOpType.closePath] = new segments.ClosePath();
-        segments.all[PathOpType.moveTo] = new segments.MoveTo();
-        segments.all[PathOpType.lineTo] = new segments.LineTo();
-        segments.all[PathOpType.bezierCurveTo] = new segments.BezierCurveTo();
-        segments.all[PathOpType.quadraticCurveTo] = new segments.QuadraticCurveTo();
-        segments.all[PathOpType.arc] = new segments.Arc();
-        segments.all[PathOpType.arcTo] = new segments.ArcTo();
-        segments.all[PathOpType.ellipse] = new segments.Ellipse();
-        segments.all[PathOpType.rect] = new segments.Rect();
-    })(segments = curve.segments || (curve.segments = {}));
+                StrokeBounds.prototype.ensure = function () {
+                    if (!this.$calc)
+                        this.calculate();
+                    return this;
+                };
+                StrokeBounds.prototype.calculate = function () {
+                    var _this = this;
+                    this.$calc = false;
+                    this.l = Number.POSITIVE_INFINITY;
+                    this.t = Number.POSITIVE_INFINITY;
+                    this.r = Number.NEGATIVE_INFINITY;
+                    this.b = Number.NEGATIVE_INFINITY;
+                    var sx, sy, last, lastMetrics;
+                    var selector = new bounds.ExtenderSelector();
+                    this.path.exec(selector, function () {
+                        var cur = selector.current;
+                        var metrics = cur.init(sx, sy, selector.args);
+                        if (!cur.isMove && last.isMove) {
+                            stroke.extendStartCap(_this, sx, sy, metrics, _this.pars);
+                        }
+                        else if (lastMetrics) {
+                            stroke.extendLineJoin(_this, sx, sy, metrics, lastMetrics, _this.pars);
+                        }
+                        cur.extendStrokeBox(_this, sx, sy, selector.args, metrics, _this.pars);
+                        sx = metrics.endPoint[0];
+                        sy = metrics.endPoint[1];
+                        last = cur;
+                        lastMetrics = metrics;
+                    });
+                    if (lastMetrics)
+                        stroke.extendEndCap(this, lastMetrics, this.pars);
+                    this.$calc = true;
+                    return this;
+                };
+                return StrokeBounds;
+            })();
+            stroke.StrokeBounds = StrokeBounds;
+        })(stroke = bounds.stroke || (bounds.stroke = {}));
+    })(bounds = curve.bounds || (curve.bounds = {}));
 })(curve || (curve = {}));
 var curve;
 (function (curve) {
@@ -908,7 +1142,7 @@ var curve;
             var Parser = (function () {
                 function Parser() {
                 }
-                Parser.prototype.parse = function (executor, data) {
+                Parser.prototype.parse = function (runner, data) {
                     var buffer = toBuffer(data);
                     return undefined;
                 };
@@ -1009,23 +1243,166 @@ var curve;
 var curve;
 (function (curve) {
     var parse;
+    (function (parse) {
+        var dom;
+        (function (dom) {
+            var domsvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            var dompath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            var Parser = (function () {
+                function Parser() {
+                }
+                Parser.prototype.parse = function (runner, data) {
+                    if (typeof data !== "string") {
+                        console.warn("Input parse data was not a string.", data);
+                        return;
+                    }
+                    dompath.setAttribute("d", data);
+                    var segments = dompath.pathSegList, cur = [0, 0];
+                    for (var i = 0, len = segments.numberOfItems; i < len; i++) {
+                        parseSegment(runner, segments.getItem(i), cur);
+                    }
+                };
+                return Parser;
+            })();
+            dom.Parser = Parser;
+            function parseSegment(runner, segment, cur) {
+                switch (segment.pathSegType) {
+                    case SVGPathSeg.PATHSEG_ARC_ABS:
+                        var arc1 = segment;
+                        curve.ellipticalArc.genEllipse(runner, cur[0], cur[1], arc1.x, arc1.y, arc1.largeArcFlag ? 1 : 0, arc1.sweepFlag ? 1 : 0, arc1.r1, arc1.r2, arc1.angle);
+                        cur[0] = arc1.x;
+                        cur[1] = arc1.y;
+                        break;
+                    case SVGPathSeg.PATHSEG_ARC_REL:
+                        var arc2 = segment;
+                        curve.ellipticalArc.genEllipse(runner, cur[0], cur[1], cur[0] + arc2.x, cur[1] + arc2.y, arc2.largeArcFlag ? 1 : 0, arc2.sweepFlag ? 1 : 0, arc2.r1, arc2.r2, arc2.angle);
+                        cur[0] += arc2.x;
+                        cur[1] += arc2.y;
+                        break;
+                    case SVGPathSeg.PATHSEG_CLOSEPATH:
+                        runner.closePath();
+                        break;
+                    case SVGPathSeg.PATHSEG_CURVETO_CUBIC_ABS:
+                        var curve1 = segment;
+                        runner.bezierCurveTo(curve1.x1, curve1.y1, curve1.x2, curve1.y2, curve1.x, curve1.y);
+                        cur[0] = curve1.x;
+                        cur[1] = curve1.y;
+                        break;
+                    case SVGPathSeg.PATHSEG_CURVETO_CUBIC_REL:
+                        var curve2 = segment;
+                        runner.bezierCurveTo(cur[0] + curve2.x1, cur[1] + curve2.y1, cur[0] + curve2.x2, cur[1] + curve2.y2, cur[0] + curve2.x, cur[1] + curve2.y);
+                        cur[0] += curve2.x;
+                        cur[1] += curve2.y;
+                        break;
+                    case SVGPathSeg.PATHSEG_CURVETO_CUBIC_SMOOTH_ABS:
+                        var curve3 = segment;
+                        smoothCubic(runner, curve3.x2, curve3.y2, curve3.x, curve3.y, cur);
+                        break;
+                    case SVGPathSeg.PATHSEG_CURVETO_CUBIC_SMOOTH_REL:
+                        var curve4 = segment;
+                        smoothCubic(runner, cur[0] + curve4.x2, cur[1] + curve4.y2, cur[0] + curve4.x, cur[1] + curve4.y, cur);
+                        break;
+                    case SVGPathSeg.PATHSEG_CURVETO_QUADRATIC_ABS:
+                        var curve5 = segment;
+                        runner.quadraticCurveTo(curve5.x1, curve5.y1, curve5.x, curve5.y);
+                        cur[0] = curve5.x;
+                        cur[1] = curve5.y;
+                        break;
+                    case SVGPathSeg.PATHSEG_CURVETO_QUADRATIC_REL:
+                        var curve6 = segment;
+                        runner.quadraticCurveTo(cur[0] + curve6.x1, cur[1] + curve6.y1, cur[0] + curve6.x, cur[1] + curve6.y);
+                        cur[0] += curve6.x;
+                        cur[1] += curve6.y;
+                        break;
+                    case SVGPathSeg.PATHSEG_CURVETO_QUADRATIC_SMOOTH_ABS:
+                        var curve7 = segment;
+                        smoothQuadratic(runner, curve7.x, curve7.y, cur);
+                        break;
+                    case SVGPathSeg.PATHSEG_CURVETO_QUADRATIC_SMOOTH_REL:
+                        var curve8 = segment;
+                        smoothQuadratic(runner, cur[0] + curve8.x, cur[1] + curve8.y, cur);
+                        break;
+                    case SVGPathSeg.PATHSEG_LINETO_ABS:
+                        var line1 = segment;
+                        cur[0] = line1.x;
+                        cur[1] = line1.y;
+                        runner.lineTo(cur[0], cur[1]);
+                        break;
+                    case SVGPathSeg.PATHSEG_LINETO_HORIZONTAL_ABS:
+                        var line2 = segment;
+                        cur[0] = line2.x;
+                        runner.lineTo(cur[0], cur[1]);
+                        break;
+                    case SVGPathSeg.PATHSEG_LINETO_HORIZONTAL_REL:
+                        var line3 = segment;
+                        cur[0] += line3.x;
+                        runner.lineTo(cur[0], cur[1]);
+                        break;
+                    case SVGPathSeg.PATHSEG_LINETO_REL:
+                        var line4 = segment;
+                        cur[0] += line4.x;
+                        cur[1] += line4.y;
+                        runner.lineTo(cur[0], cur[1]);
+                        break;
+                    case SVGPathSeg.PATHSEG_LINETO_VERTICAL_ABS:
+                        var line5 = segment;
+                        cur[1] = line5.y;
+                        runner.lineTo(cur[0], cur[1]);
+                        break;
+                    case SVGPathSeg.PATHSEG_LINETO_VERTICAL_REL:
+                        var line6 = segment;
+                        cur[1] += line6.y;
+                        runner.lineTo(cur[0], cur[1]);
+                        break;
+                    case SVGPathSeg.PATHSEG_MOVETO_ABS:
+                        var move1 = segment;
+                        cur[0] = move1.x;
+                        cur[1] = move1.y;
+                        runner.moveTo(cur[0], cur[1]);
+                        break;
+                    case SVGPathSeg.PATHSEG_MOVETO_REL:
+                        var move2 = segment;
+                        cur[0] += move2.x;
+                        cur[1] += move2.y;
+                        runner.moveTo(cur[0], cur[1]);
+                        break;
+                    default:
+                    case SVGPathSeg.PATHSEG_UNKNOWN:
+                        console.warn("Unknown path segment.");
+                        break;
+                }
+            }
+            function smoothCubic(runner, x2, y2, x, y, cur) {
+                var cx = cur[0], cy = cur[1];
+                console.warn("Smooth cubic", "Not implemented");
+            }
+            function smoothQuadratic(runner, x, y, cur) {
+                var cx = cur[0], cy = cur[1];
+                console.warn("Smooth quadratic", "Not implemented");
+            }
+        })(dom = parse.dom || (parse.dom = {}));
+    })(parse = curve.parse || (curve.parse = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
+    var parse;
     (function (parse_1) {
         var matching;
         (function (matching) {
             var Parser = (function () {
                 function Parser() {
                 }
-                Parser.prototype.parse = function (executor, data) {
+                Parser.prototype.parse = function (runner, data) {
                     if (typeof data === "string")
-                        parse(executor, data, data.length);
-                    console.warn("Input parse data was not a string.", data);
+                        parse(runner, data, data.length);
+                    else
+                        console.warn("Input parse data was not a string.", data);
                 };
                 return Parser;
             })();
             matching.Parser = Parser;
-            function parse(executor, str, len) {
+            function parse(runner, str, len) {
                 var index = 0;
-                executor.setFillRule(FillRule.EvenOdd);
                 go();
                 function go() {
                     var cp = { x: 0, y: 0 };
@@ -1047,9 +1424,9 @@ var curve;
                             case 'F':
                                 c = str.charAt(index);
                                 if (c === '0')
-                                    executor.setFillRule(FillRule.EvenOdd);
+                                    runner.setFillRule(FillRule.EvenOdd);
                                 else if (c === '1')
-                                    executor.setFillRule(FillRule.NonZero);
+                                    runner.setFillRule(FillRule.NonZero);
                                 else
                                     return null;
                                 index++;
@@ -1065,7 +1442,7 @@ var curve;
                                     cp1.x += cp.x;
                                     cp1.y += cp.y;
                                 }
-                                executor.moveTo(cp1.x, cp1.y);
+                                runner.moveTo(cp1.x, cp1.y);
                                 start.x = cp.x = cp1.x;
                                 start.y = cp.y = cp1.y;
                                 advance();
@@ -1076,7 +1453,7 @@ var curve;
                                         cp1.x += cp.x;
                                         cp1.y += cp.y;
                                     }
-                                    executor.lineTo(cp1.x, cp1.y);
+                                    runner.lineTo(cp1.x, cp1.y);
                                 }
                                 cp.x = cp1.x;
                                 cp.y = cp1.y;
@@ -1092,7 +1469,7 @@ var curve;
                                         cp1.x += cp.x;
                                         cp1.y += cp.y;
                                     }
-                                    executor.lineTo(cp1.x, cp1.y);
+                                    runner.lineTo(cp1.x, cp1.y);
                                     cp.x = cp1.x;
                                     cp.y = cp1.y;
                                     advance();
@@ -1108,7 +1485,7 @@ var curve;
                                 if (relative)
                                     x += cp.x;
                                 cp = { x: x, y: cp.y };
-                                executor.lineTo(cp.x, cp.y);
+                                runner.lineTo(cp.x, cp.y);
                                 cbz = qbz = false;
                                 break;
                             case 'v':
@@ -1120,7 +1497,7 @@ var curve;
                                 if (relative)
                                     y += cp.y;
                                 cp = { x: cp.x, y: y };
-                                executor.lineTo(cp.x, cp.y);
+                                runner.lineTo(cp.x, cp.y);
                                 cbz = qbz = false;
                                 break;
                             case 'c':
@@ -1148,7 +1525,7 @@ var curve;
                                         cp3.y += cp.y;
                                     }
                                     advance();
-                                    executor.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, cp3.x, cp3.y);
+                                    runner.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, cp3.x, cp3.y);
                                     cp1.x = cp3.x;
                                     cp1.y = cp3.y;
                                 }
@@ -1182,7 +1559,7 @@ var curve;
                                     }
                                     else
                                         cp1 = cp;
-                                    executor.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, cp3.x, cp3.y);
+                                    runner.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, cp3.x, cp3.y);
                                     cbz = true;
                                     cbzp.x = cp2.x;
                                     cbzp.y = cp2.y;
@@ -1210,7 +1587,7 @@ var curve;
                                         cp2.y += cp.y;
                                     }
                                     advance();
-                                    executor.quadraticCurveTo(cp1.x, cp1.y, cp2.x, cp2.y);
+                                    runner.quadraticCurveTo(cp1.x, cp1.y, cp2.x, cp2.y);
                                     cp.x = cp2.x;
                                     cp.y = cp2.y;
                                 }
@@ -1235,7 +1612,7 @@ var curve;
                                     }
                                     else
                                         cp1 = cp;
-                                    executor.quadraticCurveTo(cp1.x, cp1.y, cp2.x, cp2.y);
+                                    runner.quadraticCurveTo(cp1.x, cp1.y, cp2.x, cp2.y);
                                     qbz = true;
                                     qbzp.x = cp1.x;
                                     qbzp.y = cp1.y;
@@ -1262,7 +1639,8 @@ var curve;
                                         cp2.x += cp.x;
                                         cp2.y += cp.y;
                                     }
-                                    executor.ellipticalArc(cp1.x, cp1.y, angle, is_large, sweep, cp2.x, cp2.y);
+                                    var phi = angle * Math.PI / 180.0;
+                                    curve.ellipticalArc.genEllipse(runner, cp.x, cp.y, cp2.x, cp2.y, is_large, sweep, phi, cp1.x, cp1.y);
                                     cp.x = cp2.x;
                                     cp.y = cp2.y;
                                     advance();
@@ -1271,7 +1649,7 @@ var curve;
                                 break;
                             case 'z':
                             case 'Z':
-                                executor.closePath();
+                                runner.closePath();
                                 cp.x = start.x;
                                 cp.y = start.y;
                                 cbz = qbz = false;
@@ -1380,22 +1758,6 @@ var curve;
         })(matching = parse_1.matching || (parse_1.matching = {}));
     })(parse = curve.parse || (curve.parse = {}));
 })(curve || (curve = {}));
-var curve;
-(function (curve) {
-    (function (PenLineCap) {
-        PenLineCap[PenLineCap["Flat"] = 0] = "Flat";
-        PenLineCap[PenLineCap["Square"] = 1] = "Square";
-        PenLineCap[PenLineCap["Round"] = 2] = "Round";
-        PenLineCap[PenLineCap["Triangle"] = 3] = "Triangle";
-    })(curve.PenLineCap || (curve.PenLineCap = {}));
-    var PenLineCap = curve.PenLineCap;
-    (function (PenLineJoin) {
-        PenLineJoin[PenLineJoin["Miter"] = 0] = "Miter";
-        PenLineJoin[PenLineJoin["Bevel"] = 1] = "Bevel";
-        PenLineJoin[PenLineJoin["Round"] = 2] = "Round";
-    })(curve.PenLineJoin || (curve.PenLineJoin = {}));
-    var PenLineJoin = curve.PenLineJoin;
-})(curve || (curve = {}));
 var FillRule;
 (function (FillRule) {
     FillRule[FillRule["EvenOdd"] = 0] = "EvenOdd";
@@ -1414,14 +1776,18 @@ var curve;
             if (arg0 instanceof Path) {
                 arg0.exec(this);
             }
+            else if (Array.isArray(arg0)) {
+                new curve.compiler.decompile(this, arg0);
+            }
             else if (typeof arg0 === "string") {
                 var parser = curve.parse.getParser();
                 parser.parse(this, arg0);
             }
         }
-        Path.prototype.exec = function (executor) {
+        Path.prototype.exec = function (runner, step) {
             for (var ops = this.$ops, i = 0; ops && i < ops.length; i++) {
-                ops[i](executor);
+                ops[i](runner);
+                step && step();
             }
         };
         Path.prototype.draw = function (ctx) {
@@ -1454,22 +1820,61 @@ var curve;
         Path.prototype.arcTo = function (x1, y1, x2, y2, radius) {
             this.$ops.push(function (exec) { return exec.arcTo(x1, y1, x2, y2, radius); });
         };
-        Path.prototype.ellipse = function (x, y, radiusX, radiusY, rotation, startAngle, endAngle, anticlockwise) {
-            this.$ops.push(function (exec) { return exec.ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle, anticlockwise); });
+        Path.prototype.ellipse = function (x, y, radiusX, radiusY, rotation, startAngle, endAngle, antiClockwise) {
+            this.$ops.push(function (exec) { return exec.ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle, antiClockwise); });
         };
-        Path.prototype.ellipticalArc = function (rx, ry, rotation, largeArcFlag, sweepFlag, ex, ey) {
-            this.$ops.push(function (exec) { return exec.ellipticalArc(rx, ry, rotation, largeArcFlag, sweepFlag, ex, ey); });
-        };
-        Path.prototype.rect = function (x, y, width, height) {
-            this.$ops.push(function (exec) { return exec.rect(x, y, width, height); });
-        };
-        Path.parse = function (executor, data) {
+        Path.parse = function (runner, data) {
             var parser = curve.parse.getParser();
-            parser.parse(executor, data);
+            parser.parse(runner, data);
         };
         return Path;
     })();
     curve.Path = Path;
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
+    function serialize(path) {
+        var serializer = new Serializer();
+        path.exec(serializer);
+        return serializer.data;
+    }
+    curve.serialize = serialize;
+    var Serializer = (function () {
+        function Serializer() {
+            this.data = "";
+        }
+        Serializer.prototype.setFillRule = function (fillRule) {
+            this.prepend().data += "F" + fillRule;
+        };
+        Serializer.prototype.closePath = function () {
+            this.prepend().data += "Z";
+        };
+        Serializer.prototype.moveTo = function (x, y) {
+            this.prepend().data += "M" + x + "," + y;
+        };
+        Serializer.prototype.lineTo = function (x, y) {
+            this.prepend().data += "L" + x + "," + y;
+        };
+        Serializer.prototype.bezierCurveTo = function (cp1x, cp1y, cp2x, cp2y, x, y) {
+            this.prepend().data += "C" + cp1x + "," + cp1y + "," + cp2x + "," + cp2y + "," + x + "," + y;
+        };
+        Serializer.prototype.quadraticCurveTo = function (cpx, cpy, x, y) {
+            this.prepend().data += "Q" + cpx + "," + cpy + "," + x + "," + y;
+        };
+        Serializer.prototype.arc = function (x, y, radius, startAngle, endAngle, anticlockwise) {
+        };
+        Serializer.prototype.arcTo = function (x1, y1, x2, y2, radius) {
+        };
+        Serializer.prototype.ellipse = function (x, y, radiusX, radiusY, rotation, startAngle, endAngle, antiClockwise) {
+            console.warn("serialize.ellipse", "Not implemented");
+        };
+        Serializer.prototype.prepend = function () {
+            if (this.data)
+                this.data += " ";
+            return this;
+        };
+        return Serializer;
+    })();
 })(curve || (curve = {}));
 
 //# sourceMappingURL=curve.js.map
