@@ -1,6 +1,7 @@
 namespace demo {
     var $canvas: HTMLCanvasElement;
     var $data: HTMLInputElement;
+    var $bounds: HTMLInputElement;
     var $cur: curve.Path;
 
     export function setCanvas(canvas: HTMLCanvasElement) {
@@ -9,6 +10,10 @@ namespace demo {
 
     export function setDataInput(data: HTMLInputElement) {
         $data = data;
+    }
+
+    export function setBoundsInput(bounds: HTMLInputElement) {
+        $bounds = bounds;
     }
 
     export function run() {
@@ -34,13 +39,14 @@ namespace demo {
         stroke.set(ctx);
         ctx.stroke();
 
-        bounds.draw(ctx, $cur, stroke.pars);
+        var box = bounds.draw(ctx, $cur, stroke.pars);
         if (create.isSingleType())
             guide.drawSingle(ctx, $cur);
         else
             guide.drawMultiple(ctx, $cur);
 
         $data.value = curve.serialize($cur);
+        $bounds.value = `l: ${box.l}, t: ${box.t}, r: ${box.r}, b: ${box.b}`;
 
         return demo;
     }

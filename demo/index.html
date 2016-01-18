@@ -18,6 +18,7 @@
             canvas.height = 600;
             demo.setCanvas(canvas);
             demo.setDataInput(document.getElementById('data'));
+            demo.setBoundsInput(document.getElementById('bounds'));
             demo.run();
         }
         function onTypeChanged(e) {
@@ -83,6 +84,9 @@
 </div>
 <div>
     <input id="data" type="text" readonly="readonly" style="width: 800px;" />
+</div>
+<div>
+    <input id="bounds" type="text" readonly="readonly" style="width: 800px;" />
 </div>
 </body>
 </html>
