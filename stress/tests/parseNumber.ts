@@ -1,6 +1,6 @@
 import StressTest = require('./StressTest');
 
-function stringToTracker (str: string): path2d.IParseTracker {
+function stringToTracker (str: string): curve.parse.buffer.IParseTracker {
     var buffer = new TextEncoder().encode(str);
     return {
         data: buffer,
@@ -18,7 +18,7 @@ class ParseNumberTest extends StressTest {
 
     runIteration () {
         var tracker = stringToTracker(this.data);
-        var num = path2d.parseNumber(tracker);
+        var num = curve.parse.buffer.parseNumber(tracker);
     }
 }
 export = ParseNumberTest;

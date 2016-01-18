@@ -1,6 +1,8 @@
+///<reference path="ParseTypes.ts"/>
+
 namespace curve.parse {
     export interface IParser {
-        parse(path: IPath, data: string|Uint8Array): IPath;
+        parse(runner: ISegmentRunner, data: string|Uint8Array);
     }
 
     export var style = ParseStyles.CharMatching;

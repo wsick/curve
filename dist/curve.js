@@ -5,16 +5,6 @@ var curve;
 var curve;
 (function (curve) {
     var proto = CanvasRenderingContext2D.prototype;
-    if (typeof proto.drawPath !== "function") {
-        proto.drawPath = function (path) {
-            this.beginPath();
-            path.draw(this);
-        };
-    }
-})(curve || (curve = {}));
-var curve;
-(function (curve) {
-    var proto = CanvasRenderingContext2D.prototype;
     if (!proto.ellipse) {
         proto.ellipse = function (x, y, radiusX, radiusY, rotation, startAngle, endAngle, antiClockwise) {
             this.save();
@@ -29,51 +19,31 @@ var curve;
 var curve;
 (function (curve) {
     var proto = CanvasRenderingContext2D.prototype;
-    var _fill = proto.fill;
-    proto.fill = function (arg) {
-        if (arg instanceof curve.Path) {
-            this.drawPath(arg);
-            _fill.apply(this, Array.prototype.slice.call(arguments, 1));
-        }
-        else {
-            _fill.apply(this, arguments);
-        }
-    };
-    var _stroke = proto.stroke;
-    proto.stroke = function (arg) {
-        if (arg instanceof curve.Path) {
-            this.drawPath(arg);
-            _stroke.call(this);
-        }
-        else {
-            _stroke.call(this);
-        }
-    };
-    var _clip = proto.clip;
-    proto.clip = function (arg) {
-        if (arg instanceof curve.Path) {
-            this.drawPath(arg);
-            _clip.apply(this, Array.prototype.slice.call(arguments, 1));
-        }
-        else {
-            _clip.apply(this, arguments);
-        }
-    };
+    if (!proto.setFillRule) {
+        proto.setFillRule = function (arg) {
+            this.fillRule = arg;
+        };
+    }
 })(curve || (curve = {}));
 (function (global) {
     if (typeof global.TextEncoder === "function")
         return;
-    global.TextEncoder = function TextEncoder() {
-    };
-    Object.defineProperty(TextEncoder.prototype, "encoding", { value: 'utf-8', writable: false });
-    TextEncoder.prototype.encode = function encode(str) {
-        var buf = new ArrayBuffer(str.length);
-        var arr = new Uint8Array(buf);
-        for (var i = 0; i < arr.length; i++) {
-            arr[i] = str.charCodeAt(i);
+    global.TextEncoder = (function () {
+        function TextEncoder() {
+            Object.defineProperties(this, {
+                "encoding": { value: "utf-8", writable: false }
+            });
         }
-        return arr;
-    };
+        TextEncoder.prototype.encode = function (str) {
+            var buf = new ArrayBuffer(str.length);
+            var arr = new Uint8Array(buf);
+            for (var i = 0; i < arr.length; i++) {
+                arr[i] = str.charCodeAt(i);
+            }
+            return arr;
+        };
+        return TextEncoder;
+    })();
 })(this);
 var curve;
 (function (curve) {
@@ -117,7 +87,7 @@ var curve;
             var cxp, cyp, cx, cy;
             var c = (rx2 * ry2) - (rx2 * y1p2) - (ry2 * x1p2);
             var large = isLargeArcFlag === true;
-            var sweep = sweepDirectionFlag === curve.SweepDirection.Clockwise;
+            var sweep = sweepDirectionFlag === SweepDirection.Clockwise;
             if (c < 0.0) {
                 var scale = Math.sqrt(1.0 - c / (rx2 * ry2));
                 rx *= scale;
@@ -918,15 +888,15 @@ var curve;
     var segments;
     (function (segments) {
         segments.all = [];
-        segments.all[curve.PathOpType.closePath] = new segments.ClosePath();
-        segments.all[curve.PathOpType.moveTo] = new segments.MoveTo();
-        segments.all[curve.PathOpType.lineTo] = new segments.LineTo();
-        segments.all[curve.PathOpType.bezierCurveTo] = new segments.BezierCurveTo();
-        segments.all[curve.PathOpType.quadraticCurveTo] = new segments.QuadraticCurveTo();
-        segments.all[curve.PathOpType.arc] = new segments.Arc();
-        segments.all[curve.PathOpType.arcTo] = new segments.ArcTo();
-        segments.all[curve.PathOpType.ellipse] = new segments.Ellipse();
-        segments.all[curve.PathOpType.rect] = new segments.Rect();
+        segments.all[PathOpType.closePath] = new segments.ClosePath();
+        segments.all[PathOpType.moveTo] = new segments.MoveTo();
+        segments.all[PathOpType.lineTo] = new segments.LineTo();
+        segments.all[PathOpType.bezierCurveTo] = new segments.BezierCurveTo();
+        segments.all[PathOpType.quadraticCurveTo] = new segments.QuadraticCurveTo();
+        segments.all[PathOpType.arc] = new segments.Arc();
+        segments.all[PathOpType.arcTo] = new segments.ArcTo();
+        segments.all[PathOpType.ellipse] = new segments.Ellipse();
+        segments.all[PathOpType.rect] = new segments.Rect();
     })(segments = curve.segments || (curve.segments = {}));
 })(curve || (curve = {}));
 var curve;
@@ -938,7 +908,7 @@ var curve;
             var Parser = (function () {
                 function Parser() {
                 }
-                Parser.prototype.parse = function (path, data) {
+                Parser.prototype.parse = function (executor, data) {
                     var buffer = toBuffer(data);
                     return undefined;
                 };
@@ -1045,20 +1015,18 @@ var curve;
             var Parser = (function () {
                 function Parser() {
                 }
-                Parser.prototype.parse = function (path, data) {
+                Parser.prototype.parse = function (executor, data) {
                     if (typeof data === "string")
-                        parse(path, data, data.length);
+                        parse(executor, data, data.length);
                     console.warn("Input parse data was not a string.", data);
-                    return path;
                 };
                 return Parser;
             })();
             matching.Parser = Parser;
-            function parse(path, str, len) {
+            function parse(executor, str, len) {
                 var index = 0;
-                var fillRule = curve.FillRule.EvenOdd;
+                executor.setFillRule(FillRule.EvenOdd);
                 go();
-                path.fillRule = fillRule || curve.FillRule.EvenOdd;
                 function go() {
                     var cp = { x: 0, y: 0 };
                     var cp1, cp2, cp3;
@@ -1079,9 +1047,9 @@ var curve;
                             case 'F':
                                 c = str.charAt(index);
                                 if (c === '0')
-                                    fillRule = curve.FillRule.EvenOdd;
+                                    executor.setFillRule(FillRule.EvenOdd);
                                 else if (c === '1')
-                                    fillRule = curve.FillRule.NonZero;
+                                    executor.setFillRule(FillRule.NonZero);
                                 else
                                     return null;
                                 index++;
@@ -1097,7 +1065,7 @@ var curve;
                                     cp1.x += cp.x;
                                     cp1.y += cp.y;
                                 }
-                                path.moveTo(cp1.x, cp1.y);
+                                executor.moveTo(cp1.x, cp1.y);
                                 start.x = cp.x = cp1.x;
                                 start.y = cp.y = cp1.y;
                                 advance();
@@ -1108,7 +1076,7 @@ var curve;
                                         cp1.x += cp.x;
                                         cp1.y += cp.y;
                                     }
-                                    path.lineTo(cp1.x, cp1.y);
+                                    executor.lineTo(cp1.x, cp1.y);
                                 }
                                 cp.x = cp1.x;
                                 cp.y = cp1.y;
@@ -1124,7 +1092,7 @@ var curve;
                                         cp1.x += cp.x;
                                         cp1.y += cp.y;
                                     }
-                                    path.lineTo(cp1.x, cp1.y);
+                                    executor.lineTo(cp1.x, cp1.y);
                                     cp.x = cp1.x;
                                     cp.y = cp1.y;
                                     advance();
@@ -1140,7 +1108,7 @@ var curve;
                                 if (relative)
                                     x += cp.x;
                                 cp = { x: x, y: cp.y };
-                                path.lineTo(cp.x, cp.y);
+                                executor.lineTo(cp.x, cp.y);
                                 cbz = qbz = false;
                                 break;
                             case 'v':
@@ -1152,7 +1120,7 @@ var curve;
                                 if (relative)
                                     y += cp.y;
                                 cp = { x: cp.x, y: y };
-                                path.lineTo(cp.x, cp.y);
+                                executor.lineTo(cp.x, cp.y);
                                 cbz = qbz = false;
                                 break;
                             case 'c':
@@ -1180,7 +1148,7 @@ var curve;
                                         cp3.y += cp.y;
                                     }
                                     advance();
-                                    path.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, cp3.x, cp3.y);
+                                    executor.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, cp3.x, cp3.y);
                                     cp1.x = cp3.x;
                                     cp1.y = cp3.y;
                                 }
@@ -1214,7 +1182,7 @@ var curve;
                                     }
                                     else
                                         cp1 = cp;
-                                    path.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, cp3.x, cp3.y);
+                                    executor.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, cp3.x, cp3.y);
                                     cbz = true;
                                     cbzp.x = cp2.x;
                                     cbzp.y = cp2.y;
@@ -1242,7 +1210,7 @@ var curve;
                                         cp2.y += cp.y;
                                     }
                                     advance();
-                                    path.quadraticCurveTo(cp1.x, cp1.y, cp2.x, cp2.y);
+                                    executor.quadraticCurveTo(cp1.x, cp1.y, cp2.x, cp2.y);
                                     cp.x = cp2.x;
                                     cp.y = cp2.y;
                                 }
@@ -1267,7 +1235,7 @@ var curve;
                                     }
                                     else
                                         cp1 = cp;
-                                    path.quadraticCurveTo(cp1.x, cp1.y, cp2.x, cp2.y);
+                                    executor.quadraticCurveTo(cp1.x, cp1.y, cp2.x, cp2.y);
                                     qbz = true;
                                     qbzp.x = cp1.x;
                                     qbzp.y = cp1.y;
@@ -1284,17 +1252,17 @@ var curve;
                                     if ((cp1 = parsePoint()) == null)
                                         break;
                                     var angle = parseDouble();
-                                    var is_large = parseDouble() !== 0;
-                                    var sweep = curve.SweepDirection.Counterclockwise;
+                                    var is_large = parseDouble() !== 0 ? 1 : 0;
+                                    var sweep = SweepDirection.Counterclockwise;
                                     if (parseDouble() !== 0)
-                                        sweep = curve.SweepDirection.Clockwise;
+                                        sweep = SweepDirection.Clockwise;
                                     if ((cp2 = parsePoint()) == null)
                                         break;
                                     if (relative) {
                                         cp2.x += cp.x;
                                         cp2.y += cp.y;
                                     }
-                                    console.warn("ellipticalArc not implemented");
+                                    executor.ellipticalArc(cp1.x, cp1.y, angle, is_large, sweep, cp2.x, cp2.y);
                                     cp.x = cp2.x;
                                     cp.y = cp2.y;
                                     advance();
@@ -1303,7 +1271,7 @@ var curve;
                                 break;
                             case 'z':
                             case 'Z':
-                                path.closePath();
+                                executor.closePath();
                                 cp.x = start.x;
                                 cp.y = start.y;
                                 cbz = qbz = false;
@@ -1414,16 +1382,6 @@ var curve;
 })(curve || (curve = {}));
 var curve;
 (function (curve) {
-    (function (FillRule) {
-        FillRule[FillRule["EvenOdd"] = 0] = "EvenOdd";
-        FillRule[FillRule["NonZero"] = 1] = "NonZero";
-    })(curve.FillRule || (curve.FillRule = {}));
-    var FillRule = curve.FillRule;
-    (function (SweepDirection) {
-        SweepDirection[SweepDirection["Counterclockwise"] = 0] = "Counterclockwise";
-        SweepDirection[SweepDirection["Clockwise"] = 1] = "Clockwise";
-    })(curve.SweepDirection || (curve.SweepDirection = {}));
-    var SweepDirection = curve.SweepDirection;
     (function (PenLineCap) {
         PenLineCap[PenLineCap["Flat"] = 0] = "Flat";
         PenLineCap[PenLineCap["Square"] = 1] = "Square";
@@ -1438,107 +1396,76 @@ var curve;
     })(curve.PenLineJoin || (curve.PenLineJoin = {}));
     var PenLineJoin = curve.PenLineJoin;
 })(curve || (curve = {}));
+var FillRule;
+(function (FillRule) {
+    FillRule[FillRule["EvenOdd"] = 0] = "EvenOdd";
+    FillRule[FillRule["NonZero"] = 1] = "NonZero";
+})(FillRule || (FillRule = {}));
+var SweepDirection;
+(function (SweepDirection) {
+    SweepDirection[SweepDirection["Counterclockwise"] = 0] = "Counterclockwise";
+    SweepDirection[SweepDirection["Clockwise"] = 1] = "Clockwise";
+})(SweepDirection || (SweepDirection = {}));
 var curve;
 (function (curve) {
-    (function (PathOpType) {
-        PathOpType[PathOpType["closePath"] = 0] = "closePath";
-        PathOpType[PathOpType["moveTo"] = 1] = "moveTo";
-        PathOpType[PathOpType["lineTo"] = 2] = "lineTo";
-        PathOpType[PathOpType["bezierCurveTo"] = 3] = "bezierCurveTo";
-        PathOpType[PathOpType["quadraticCurveTo"] = 4] = "quadraticCurveTo";
-        PathOpType[PathOpType["arc"] = 5] = "arc";
-        PathOpType[PathOpType["arcTo"] = 6] = "arcTo";
-        PathOpType[PathOpType["ellipse"] = 7] = "ellipse";
-        PathOpType[PathOpType["rect"] = 8] = "rect";
-    })(curve.PathOpType || (curve.PathOpType = {}));
-    var PathOpType = curve.PathOpType;
     var Path = (function () {
         function Path(arg0) {
+            this.$ops = [];
             if (arg0 instanceof Path) {
-                this.$ops = JSON.parse(JSON.stringify(this.$ops));
+                arg0.exec(this);
             }
             else if (typeof arg0 === "string") {
-                this.$ops = [];
-                Path.parse.call(this, arg0);
-            }
-            else {
-                this.$ops = [];
+                var parser = curve.parse.getParser();
+                parser.parse(this, arg0);
             }
         }
-        Path.prototype.addPath = function (path, transform) {
-            console.warn("addPath", "Not implemented");
-        };
-        Path.prototype.closePath = function () {
-            this.$ops.push({
-                type: PathOpType.closePath,
-                args: Array.prototype.slice.call(arguments, 0)
-            });
-        };
-        Path.prototype.moveTo = function (x, y) {
-            this.$ops.push({
-                type: PathOpType.moveTo,
-                args: Array.prototype.slice.call(arguments, 0)
-            });
-        };
-        Path.prototype.lineTo = function (x, y) {
-            this.$ops.push({
-                type: PathOpType.lineTo,
-                args: Array.prototype.slice.call(arguments, 0)
-            });
-        };
-        Path.prototype.bezierCurveTo = function (cp1x, cp1y, cp2x, cp2y, x, y) {
-            this.$ops.push({
-                type: PathOpType.bezierCurveTo,
-                args: Array.prototype.slice.call(arguments, 0)
-            });
-        };
-        Path.prototype.quadraticCurveTo = function (cpx, cpy, x, y) {
-            this.$ops.push({
-                type: PathOpType.quadraticCurveTo,
-                args: Array.prototype.slice.call(arguments, 0)
-            });
-        };
-        Path.prototype.arc = function (x, y, radius, startAngle, endAngle, anticlockwise) {
-            this.$ops.push({
-                type: PathOpType.arc,
-                args: Array.prototype.slice.call(arguments, 0),
-                metrics: {}
-            });
-        };
-        Path.prototype.arcTo = function (x1, y1, x2, y2, radius) {
-            this.$ops.push({
-                type: PathOpType.arcTo,
-                args: Array.prototype.slice.call(arguments, 0),
-                metrics: {}
-            });
-        };
-        Path.prototype.ellipse = function (x, y, radiusX, radiusY, rotation, startAngle, endAngle, anticlockwise) {
-            this.$ops.push({
-                type: PathOpType.ellipse,
-                args: Array.prototype.slice.call(arguments, 0)
-            });
-        };
-        Path.prototype.rect = function (x, y, width, height) {
-            this.$ops.push({
-                type: PathOpType.rect,
-                args: Array.prototype.slice.call(arguments, 0)
-            });
-        };
-        Path.prototype.draw = function (ctx) {
-            for (var i = 0, ops = this.$ops, len = ops.length; i < len; i++) {
-                var op = ops[i];
-                var name_1 = PathOpType[op.type];
-                var func = ctx[name_1];
-                if (!func)
-                    throw new Error("Invalid path operation type. [" + op.type + "]");
-                func.apply(this, op.args);
+        Path.prototype.exec = function (executor) {
+            for (var ops = this.$ops, i = 0; ops && i < ops.length; i++) {
+                ops[i](executor);
             }
         };
-        Path.parse = function (d) {
+        Path.prototype.draw = function (ctx) {
+            this.exec(ctx);
+        };
+        Path.prototype.addPath = function (path) {
+            path.exec(this);
+        };
+        Path.prototype.setFillRule = function (fillRule) {
+            this.$ops.push(function (exec) { return exec.setFillRule(fillRule); });
+        };
+        Path.prototype.closePath = function () {
+            this.$ops.push(function (exec) { return exec.closePath(); });
+        };
+        Path.prototype.moveTo = function (x, y) {
+            this.$ops.push(function (exec) { return exec.moveTo(x, y); });
+        };
+        Path.prototype.lineTo = function (x, y) {
+            this.$ops.push(function (exec) { return exec.lineTo(x, y); });
+        };
+        Path.prototype.bezierCurveTo = function (cp1x, cp1y, cp2x, cp2y, x, y) {
+            this.$ops.push(function (exec) { return exec.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y); });
+        };
+        Path.prototype.quadraticCurveTo = function (cpx, cpy, x, y) {
+            this.$ops.push(function (exec) { return exec.quadraticCurveTo(cpx, cpy, x, y); });
+        };
+        Path.prototype.arc = function (x, y, radius, startAngle, endAngle, anticlockwise) {
+            this.$ops.push(function (exec) { return exec.arc(x, y, radius, startAngle, endAngle, anticlockwise); });
+        };
+        Path.prototype.arcTo = function (x1, y1, x2, y2, radius) {
+            this.$ops.push(function (exec) { return exec.arcTo(x1, y1, x2, y2, radius); });
+        };
+        Path.prototype.ellipse = function (x, y, radiusX, radiusY, rotation, startAngle, endAngle, anticlockwise) {
+            this.$ops.push(function (exec) { return exec.ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle, anticlockwise); });
+        };
+        Path.prototype.ellipticalArc = function (rx, ry, rotation, largeArcFlag, sweepFlag, ex, ey) {
+            this.$ops.push(function (exec) { return exec.ellipticalArc(rx, ry, rotation, largeArcFlag, sweepFlag, ex, ey); });
+        };
+        Path.prototype.rect = function (x, y, width, height) {
+            this.$ops.push(function (exec) { return exec.rect(x, y, width, height); });
+        };
+        Path.parse = function (executor, data) {
             var parser = curve.parse.getParser();
-            var _this = this;
-            var inst = _this instanceof Path ? _this : new Path();
-            return parser.parse(inst, d);
+            parser.parse(executor, data);
         };
         return Path;
     })();
