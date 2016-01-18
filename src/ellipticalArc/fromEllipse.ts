@@ -19,9 +19,8 @@ namespace curve.ellipticalArc {
     // ea = ending angle (radians)
     // phi = angle (radians) from x-axis of coordinate space to x-axis of ellipse
     export function fromEllipse(cx: number, cy: number, rx: number, ry: number, sa: number, ea: number, phi: number): IEllipticalArcParameterization {
-        // Convert from endpoint to center parametrization, as detailed in:
-        //   http://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes
-        //   Conversion from center to endpoint parameterization
+        // http://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes
+        // F.6.4 Conversion from center to endpoint parameterization
 
         // F.6.4.1
         // Compute a`

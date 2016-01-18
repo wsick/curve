@@ -20,9 +20,8 @@ namespace curve.ellipticalArc {
     // [rx, ry] = radial size
     // phi = angle (radians) from x-axis of coordinate space to x-axis of ellipse
     export function toEllipse(x1: number, y1: number, x2: number, y2: number, fa: number, fs: number, rx: number, ry: number, phi: number): IEllipseParameterization {
-        // Convert from endpoint to center parametrization, as detailed in:
-        //   http://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes
-        //   Conversion from endpoint to center parameterization
+        // http://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes
+        // F.6.5 Conversion from endpoint to center parameterization
         if (rx === 0 || ry === 0) {
             return {x: x2, y: y2, rx: rx, ry: ry};
         }
@@ -31,6 +30,9 @@ namespace curve.ellipticalArc {
         // Compute a`
         var ap = vec2.midpoint(vec2.create(x1, y1), vec2.create(x2, y2));
         vec2.rotate(ap, -phi);
+
+        // Correct radii
+        [rx, ry] = correctRadii(rx, ry, ap[0], ap[1]);
 
         // F.6.5.2
         // Compute c`
