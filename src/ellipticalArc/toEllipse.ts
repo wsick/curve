@@ -2,18 +2,28 @@ namespace curve.ellipticalArc {
     import vec2 = la.vec2;
     var PI2 = 2 * Math.PI;
 
+    export interface IEllipseParameterization {
+        x: number;
+        y: number;
+        rx: number;
+        ry: number;
+        rot?: number;
+        sa?: number;
+        ea?: number;
+        ac?: boolean;
+    }
+
     // [x1, y1] = start point
     // [x2, y2] = end point
     // fa = large arc flag
     // fs = sweep direction flag
     // [rx, ry] = radial size
     // phi = angle (radians) from x-axis of coordinate space to x-axis of ellipse
-    export function genEllipse(runner: ISegmentRunner, x1: number, y1: number, x2: number, y2: number, fa: number, fs: number, rx: number, ry: number, phi: number) {
+    export function toEllipse(x1: number, y1: number, x2: number, y2: number, fa: number, fs: number, rx: number, ry: number, phi: number): IEllipseParameterization {
         // Convert from endpoint to center parametrization, as detailed in:
         //   http://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes
         if (rx === 0 || ry === 0) {
-            runner.lineTo(x2, y2);
-            return;
+            return {x: x2, y: y2, rx: rx, ry: ry};
         }
 
         // F.6.5.1
@@ -57,6 +67,15 @@ namespace curve.ellipticalArc {
             dt += PI2;
         }
 
-        runner.ellipse(c[0], c[1], rx, ry, phi, sa, sa + dt, (1 - fs) === 1);
+        return {
+            x: c[0],
+            y: c[1],
+            rx: rx,
+            ry: ry,
+            rot: phi,
+            sa: sa,
+            ea: sa + dt,
+            ac: (1 - fs) === 1
+        };
     }
 }

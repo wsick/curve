@@ -39,6 +39,8 @@
 //      Find "Z" or "z"? - CloseCommand
 
 namespace curve.parse.matching {
+    import IEllipseParameterization = curve.ellipticalArc.IEllipseParameterization;
+
     export class Parser implements IParser {
         parse(runner: ISegmentRunner, data: string|Uint8Array) {
             if (typeof data === "string")
@@ -65,6 +67,7 @@ namespace curve.parse.matching {
             var qbz = false; // last figure is a quadratic bezier curve
             var cbzp = {x: 0, y: 0}; // points needed to create "smooth" beziers
             var qbzp = {x: 0, y: 0}; // points needed to create "smooth" beziers
+            var ell: IEllipseParameterization;
 
             while (index < len) {
                 var c;
@@ -315,7 +318,11 @@ namespace curve.parse.matching {
                             }
 
                             var phi = angle * Math.PI / 180.0;
-                            ellipticalArc.genEllipse(runner, cp.x, cp.y, cp2.x, cp2.y, is_large, sweep, phi, cp1.x, cp1.y);
+                            ell = ellipticalArc.toEllipse(cp.x, cp.y, cp2.x, cp2.y, is_large, sweep, phi, cp1.x, cp1.y);
+                            if (!ell.rx || !ell.ry)
+                                runner.lineTo(ell.x, ell.y);
+                            else
+                                runner.ellipse(ell.x, ell.y, ell.rx, ell.ry, ell.rot, ell.sa, ell.ea, ell.ac);
 
                             cp.x = cp2.x;
                             cp.y = cp2.y;
