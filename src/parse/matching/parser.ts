@@ -322,7 +322,7 @@ namespace curve.parse.matching {
                             if (!ell.rx || !ell.ry)
                                 runner.lineTo(ell.x, ell.y);
                             else
-                                runner.ellipse(ell.x, ell.y, ell.rx, ell.ry, ell.rot, ell.sa, ell.ea, ell.ac);
+                                runner.ellipse(ell.x, ell.y, ell.rx, ell.ry, ell.phi, ell.sa, ell.ea, ell.ac);
 
                             cp.x = cp2.x;
                             cp.y = cp2.y;

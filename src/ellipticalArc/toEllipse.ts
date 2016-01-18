@@ -7,10 +7,10 @@ namespace curve.ellipticalArc {
         y: number;
         rx: number;
         ry: number;
-        rot?: number;
-        sa?: number;
-        ea?: number;
-        ac?: boolean;
+        phi?: number; // rotation (radians)
+        sa?: number; // start angle (radians)
+        ea?: number; // end angle (radians)
+        ac?: boolean; // anti-clockwise
     }
 
     // [x1, y1] = start point
@@ -22,6 +22,7 @@ namespace curve.ellipticalArc {
     export function toEllipse(x1: number, y1: number, x2: number, y2: number, fa: number, fs: number, rx: number, ry: number, phi: number): IEllipseParameterization {
         // Convert from endpoint to center parametrization, as detailed in:
         //   http://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes
+        //   Conversion from endpoint to center parameterization
         if (rx === 0 || ry === 0) {
             return {x: x2, y: y2, rx: rx, ry: ry};
         }
@@ -72,7 +73,7 @@ namespace curve.ellipticalArc {
             y: c[1],
             rx: rx,
             ry: ry,
-            rot: phi,
+            phi: phi,
             sa: sa,
             ea: sa + dt,
             ac: (1 - fs) === 1
