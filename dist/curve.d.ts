@@ -79,11 +79,14 @@ declare namespace curve.bounds.extenders {
     }
 }
 declare namespace curve.bounds.extenders {
+    interface IEllipseMetrics extends ISegmentMetrics {
+        util: la.IEllipse;
+    }
     class Ellipse implements IBoundsExtender {
         isMove: boolean;
-        init(sx: number, sy: number, args: any[]): curve.bounds.extenders.ISegmentMetrics;
-        extendFillBox(box: curve.bounds.IBoundingBox, sx: number, sy: number, args: any[], metrics: curve.bounds.extenders.ISegmentMetrics): void;
-        extendStrokeBox(box: curve.bounds.IBoundingBox, sx: number, sy: number, args: any[], metrics: curve.bounds.extenders.ISegmentMetrics, pars: curve.IStrokeParameters): void;
+        init(sx: number, sy: number, args: any[]): IEllipseMetrics;
+        extendFillBox(box: curve.bounds.IBoundingBox, sx: number, sy: number, args: any[], metrics: IEllipseMetrics): void;
+        extendStrokeBox(box: curve.bounds.IBoundingBox, sx: number, sy: number, args: any[], metrics: IEllipseMetrics, pars: curve.IStrokeParameters): void;
     }
 }
 declare namespace curve.bounds.extenders {
@@ -147,7 +150,34 @@ declare enum CompiledOpType {
     ellipse = 9,
 }
 declare namespace curve.ellipticalArc {
-    function genEllipse(runner: ISegmentRunner, x1: number, y1: number, x2: number, y2: number, fa: number, fs: number, rx: number, ry: number, phi: number): void;
+    interface IEllipticalArcParameterization {
+        sx: number;
+        sy: number;
+        ex: number;
+        ey: number;
+        fa: number;
+        fs: number;
+        rx: number;
+        ry: number;
+        phi: number;
+    }
+    function fromEllipse(cx: number, cy: number, rx: number, ry: number, phi: number, sa: number, ea: number, ac: boolean): IEllipticalArcParameterization;
+}
+declare namespace curve.ellipticalArc {
+    function correctRadii(rx: number, ry: number, apx: number, apy: number): number[];
+}
+declare namespace curve.ellipticalArc {
+    interface IEllipseParameterization {
+        cx: number;
+        cy: number;
+        rx: number;
+        ry: number;
+        phi?: number;
+        sa?: number;
+        ea?: number;
+        ac?: boolean;
+    }
+    function toEllipse(sx: number, sy: number, rx: number, ry: number, phi: number, fa: number, fs: number, ex: number, ey: number): IEllipseParameterization;
 }
 declare namespace curve.parse {
     enum ParseStyles {
@@ -277,7 +307,7 @@ interface ISegmentRunner {
     quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): any;
     arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, anticlockwise?: boolean): any;
     arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): any;
-    ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, antiClockwise?: boolean): any;
+    ellipse(cx: number, cy: number, rx: number, ry: number, rotation: number, startAngle: number, endAngle: number, antiClockwise?: boolean): any;
 }
 interface ISegment {
     (runner: ISegmentRunner): void;
@@ -310,7 +340,7 @@ declare namespace curve {
         quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): void;
         arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, anticlockwise?: boolean): void;
         arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): void;
-        ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, antiClockwise?: boolean): void;
+        ellipse(cx: number, cy: number, rx: number, ry: number, rotation: number, startAngle: number, endAngle: number, antiClockwise?: boolean): void;
         static parse(runner: ISegmentRunner, data: string): void;
     }
 }

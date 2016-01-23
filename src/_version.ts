@@ -1,3 +1,3 @@
 namespace curve {
-    export var version = '0.1.0';
+    export var version = '0.1.1';
 }

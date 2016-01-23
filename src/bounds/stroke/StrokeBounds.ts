@@ -41,10 +41,12 @@ namespace curve.bounds.stroke {
                 var cur = selector.current;
                 var metrics = cur.init(sx, sy, selector.args);
 
-                if (!cur.isMove && last.isMove) {
-                    extendStartCap(this, sx, sy, metrics, this.pars);
-                } else if (lastMetrics) {
-                    extendLineJoin(this, sx, sy, metrics, lastMetrics, this.pars);
+                if (!cur.isMove) {
+                    if (last.isMove) {
+                        extendStartCap(this, sx, sy, metrics, this.pars);
+                    } else if (lastMetrics) {
+                        extendLineJoin(this, sx, sy, metrics, lastMetrics, this.pars);
+                    }
                 }
 
                 cur.extendStrokeBox(this, sx, sy, selector.args, metrics, this.pars);

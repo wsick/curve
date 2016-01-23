@@ -1,6 +1,6 @@
 var curve;
 (function (curve) {
-    curve.version = '0.1.0';
+    curve.version = '0.1.1';
 })(curve || (curve = {}));
 var curve;
 (function (curve) {
@@ -470,16 +470,75 @@ var curve;
     (function (bounds) {
         var extenders;
         (function (extenders) {
+            var vec2 = la.vec2;
             var Ellipse = (function () {
                 function Ellipse() {
                     this.isMove = false;
                 }
                 Ellipse.prototype.init = function (sx, sy, args) {
-                    return undefined;
+                    var cx = args[0];
+                    var cy = args[1];
+                    var rx = args[2];
+                    var ry = args[3];
+                    var phi = args[4];
+                    var sa = args[5];
+                    var ea = args[6];
+                    var ac = args[7];
+                    var util = la.ellipse(cx, cy, rx, ry, phi);
+                    var ep = util.point(ea);
+                    var sv = util.tangent(sa);
+                    var ev = util.tangent(ea);
+                    if (ac == true) {
+                        vec2.reverse(sv);
+                        vec2.reverse(ev);
+                    }
+                    return {
+                        util: util,
+                        startVector: sv,
+                        endVector: ev,
+                        endPoint: ep
+                    };
                 };
                 Ellipse.prototype.extendFillBox = function (box, sx, sy, args, metrics) {
+                    var sa = args[5];
+                    var ea = args[6];
+                    var ac = args[7];
+                    var util = metrics.util;
+                    for (var i = 0, ext = util.extrema(sa, ea, ac); i < ext.length; i++) {
+                        var p = ext[i];
+                        if (!p)
+                            continue;
+                        var x = p[0];
+                        var y = p[1];
+                        box.l = Math.min(box.l, x);
+                        box.r = Math.max(box.r, x);
+                        box.t = Math.min(box.t, y);
+                        box.b = Math.max(box.b, y);
+                    }
                 };
                 Ellipse.prototype.extendStrokeBox = function (box, sx, sy, args, metrics, pars) {
+                    var sa = args[5];
+                    var ea = args[6];
+                    var ac = args[7];
+                    var util = metrics.util;
+                    var hs = pars.strokeThickness / 2.0;
+                    var _a = util.extrema(sa, ea, ac), vp1 = _a[0], vp2 = _a[1], hp1 = _a[2], hp2 = _a[3];
+                    if (vp1) {
+                        box.l = Math.min(box.l, vp1[0] - hs);
+                        box.r = Math.max(box.r, vp1[0] + hs);
+                    }
+                    if (vp2) {
+                        box.l = Math.min(box.l, vp2[0] - hs);
+                        box.r = Math.max(box.r, vp2[0] + hs);
+                    }
+                    if (hp1) {
+                        box.t = Math.min(box.t, hp1[1] - hs);
+                        box.b = Math.max(box.b, hp1[1] + hs);
+                    }
+                    if (hp2) {
+                        box.t = Math.min(box.t, hp2[1] - hs);
+                        box.b = Math.max(box.b, hp2[1] + hs);
+                    }
                 };
                 return Ellipse;
             })();
@@ -702,10 +761,10 @@ var curve;
             PathCompiler.prototype.arcTo = function (x1, y1, x2, y2, radius) {
                 this.compiled.push({ t: CompiledOpType.arcTo, a: [x1, y1, x2, y2, radius] });
             };
-            PathCompiler.prototype.ellipse = function (x, y, radiusX, radiusY, rotation, startAngle, endAngle, antiClockwise) {
+            PathCompiler.prototype.ellipse = function (cx, cy, rx, ry, rotation, startAngle, endAngle, antiClockwise) {
                 this.compiled.push({
                     t: CompiledOpType.ellipse,
-                    a: [x, y, radiusX, radiusY, rotation, startAngle, endAngle, antiClockwise]
+                    a: [cx, cy, rx, ry, rotation, startAngle, endAngle, antiClockwise]
                 });
             };
             PathCompiler.instance = new PathCompiler();
@@ -749,14 +808,64 @@ var curve;
     var ellipticalArc;
     (function (ellipticalArc) {
         var vec2 = la.vec2;
-        var PI2 = 2 * Math.PI;
-        function genEllipse(runner, x1, y1, x2, y2, fa, fs, rx, ry, phi) {
-            if (rx === 0 || ry === 0) {
-                runner.lineTo(x2, y2);
-                return;
+        function fromEllipse(cx, cy, rx, ry, phi, sa, ea, ac) {
+            var ap = vec2.rotate(vec2.create(rx * Math.cos(sa), ry * Math.sin(sa)), phi);
+            ap[0] += cx;
+            ap[1] += cy;
+            var bp = vec2.rotate(vec2.create(rx * Math.cos(ea), ry * Math.sin(ea)), phi);
+            bp[0] += cx;
+            bp[1] += cy;
+            var da = ea - sa;
+            var fa = Math.abs(da) > Math.PI ? 1 : 0;
+            var expac = Math.abs(sa - ea) ? ea < sa : sa > ea;
+            fa = (expac !== ac) ? 1 : 0;
+            var fs = ac === true ? 0 : 1;
+            return {
+                sx: ap[0],
+                sy: ap[1],
+                ex: bp[0],
+                ey: bp[1],
+                fa: fa,
+                fs: fs,
+                rx: rx,
+                ry: ry,
+                phi: phi
+            };
+        }
+        ellipticalArc.fromEllipse = fromEllipse;
+    })(ellipticalArc = curve.ellipticalArc || (curve.ellipticalArc = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
+    var ellipticalArc;
+    (function (ellipticalArc) {
+        function correctRadii(rx, ry, apx, apy) {
+            rx = Math.abs(rx);
+            ry = Math.abs(ry);
+            var lambda = ((apx * apx) / (rx * rx)) + ((apy * apy) / (ry * ry));
+            if (lambda > 1) {
+                var rl = Math.sqrt(lambda);
+                rx *= rl;
+                ry *= rl;
             }
-            var ap = vec2.midpoint(vec2.create(x1, y1), vec2.create(x2, y2));
+            return [rx, ry];
+        }
+        ellipticalArc.correctRadii = correctRadii;
+    })(ellipticalArc = curve.ellipticalArc || (curve.ellipticalArc = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
+    var ellipticalArc;
+    (function (ellipticalArc) {
+        var vec2 = la.vec2;
+        var PI2 = 2 * Math.PI;
+        function toEllipse(sx, sy, rx, ry, phi, fa, fs, ex, ey) {
+            if (rx === 0 || ry === 0) {
+                return { cx: ex, cy: ey, rx: rx, ry: ry };
+            }
+            var ap = vec2.create((sx - ex) / 2.0, (sy - ey) / 2.0);
             vec2.rotate(ap, -phi);
+            _a = ellipticalArc.correctRadii(rx, ry, ap[0], ap[1]), rx = _a[0], ry = _a[1];
             var rx2 = rx * rx;
             var ry2 = ry * ry;
             var apx2 = ap[0] * ap[0];
@@ -769,21 +878,43 @@ var curve;
             cp[0] *= factor;
             cp[1] *= factor;
             var c = vec2.rotate(vec2.clone(cp), phi);
-            c[0] += (x1 + x2) / 2.0;
-            c[1] += (y1 + y2) / 2.0;
+            c[0] += (sx + ex) / 2.0;
+            c[1] += (sy + ey) / 2.0;
+            var v = vec2.create(1, 0);
             var u = vec2.create((ap[0] - cp[0]) / rx, (ap[1] - cp[1]) / ry);
-            var v = vec2.create((-ap[0] - cp[0]) / rx, (-ap[1] - cp[1]) / ry);
-            var sa = vec2.angleBetween(vec2.create(1, 0), u);
-            var dt = vec2.angleBetween(u, v) % PI2;
+            var sa = vec2.angleBetween(v, u) * signAdjust(v, u);
+            if (sa < 0) {
+                sa += PI2;
+            }
+            v = vec2.create((-ap[0] - cp[0]) / rx, (-ap[1] - cp[1]) / ry);
+            var dt = (vec2.angleBetween(u, v) * signAdjust(u, v)) % PI2;
             if (fs === 0 && dt > 0) {
                 dt -= PI2;
             }
             else if (fs === 1 && dt < 0) {
                 dt += PI2;
             }
-            runner.ellipse(c[0], c[1], rx, ry, phi, sa, sa + dt, (1 - fs) === 1);
+            var ea = (sa + dt) % PI2;
+            if (ea < 0) {
+                ea += PI2;
+            }
+            var ac = fs === 0;
+            return {
+                cx: c[0],
+                cy: c[1],
+                rx: rx,
+                ry: ry,
+                phi: phi,
+                sa: sa,
+                ea: ea,
+                ac: ac
+            };
+            var _a;
         }
-        ellipticalArc.genEllipse = genEllipse;
+        ellipticalArc.toEllipse = toEllipse;
+        function signAdjust(u, v) {
+            return ((u[0] * v[1]) - (u[1] * v[0])) < 0 ? -1 : 1;
+        }
     })(ellipticalArc = curve.ellipticalArc || (curve.ellipticalArc = {}));
 })(curve || (curve = {}));
 var curve;
@@ -1110,11 +1241,13 @@ var curve;
                     this.path.exec(selector, function () {
                         var cur = selector.current;
                         var metrics = cur.init(sx, sy, selector.args);
-                        if (!cur.isMove && last.isMove) {
-                            stroke.extendStartCap(_this, sx, sy, metrics, _this.pars);
-                        }
-                        else if (lastMetrics) {
-                            stroke.extendLineJoin(_this, sx, sy, metrics, lastMetrics, _this.pars);
+                        if (!cur.isMove) {
+                            if (last.isMove) {
+                                stroke.extendStartCap(_this, sx, sy, metrics, _this.pars);
+                            }
+                            else if (lastMetrics) {
+                                stroke.extendLineJoin(_this, sx, sy, metrics, lastMetrics, _this.pars);
+                            }
                         }
                         cur.extendStrokeBox(_this, sx, sy, selector.args, metrics, _this.pars);
                         sx = metrics.endPoint[0];
@@ -1269,13 +1402,21 @@ var curve;
                 switch (segment.pathSegType) {
                     case SVGPathSeg.PATHSEG_ARC_ABS:
                         var arc1 = segment;
-                        curve.ellipticalArc.genEllipse(runner, cur[0], cur[1], arc1.x, arc1.y, arc1.largeArcFlag ? 1 : 0, arc1.sweepFlag ? 1 : 0, arc1.r1, arc1.r2, arc1.angle);
+                        var ell1 = curve.ellipticalArc.toEllipse(cur[0], cur[1], arc1.r1, arc1.r2, arc1.angle, arc1.largeArcFlag ? 1 : 0, arc1.sweepFlag ? 1 : 0, arc1.x, arc1.y);
+                        if (!ell1.rx || !ell1.ry)
+                            runner.lineTo(ell1.cx, ell1.cy);
+                        else
+                            runner.ellipse(ell1.cx, ell1.cy, ell1.rx, ell1.ry, ell1.phi, ell1.sa, ell1.ea, ell1.ac);
                         cur[0] = arc1.x;
                         cur[1] = arc1.y;
                         break;
                     case SVGPathSeg.PATHSEG_ARC_REL:
                         var arc2 = segment;
-                        curve.ellipticalArc.genEllipse(runner, cur[0], cur[1], cur[0] + arc2.x, cur[1] + arc2.y, arc2.largeArcFlag ? 1 : 0, arc2.sweepFlag ? 1 : 0, arc2.r1, arc2.r2, arc2.angle);
+                        var ell2 = curve.ellipticalArc.toEllipse(cur[0], cur[1], arc2.r1, arc2.r2, arc2.angle, arc2.largeArcFlag ? 1 : 0, arc2.sweepFlag ? 1 : 0, cur[0] + arc2.x, cur[1] + arc2.y);
+                        if (!ell2.rx || !ell2.ry)
+                            runner.lineTo(ell2.cx, ell2.cy);
+                        else
+                            runner.ellipse(ell2.cx, ell2.cy, ell2.rx, ell2.ry, ell2.phi, ell2.sa, ell2.ea, ell2.ac);
                         cur[0] += arc2.x;
                         cur[1] += arc2.y;
                         break;
@@ -1412,6 +1553,7 @@ var curve;
                     var qbz = false;
                     var cbzp = { x: 0, y: 0 };
                     var qbzp = { x: 0, y: 0 };
+                    var ell;
                     while (index < len) {
                         var c;
                         while (index < len && (c = str.charAt(index)) === ' ') {
@@ -1640,7 +1782,11 @@ var curve;
                                         cp2.y += cp.y;
                                     }
                                     var phi = angle * Math.PI / 180.0;
-                                    curve.ellipticalArc.genEllipse(runner, cp.x, cp.y, cp2.x, cp2.y, is_large, sweep, phi, cp1.x, cp1.y);
+                                    ell = curve.ellipticalArc.toEllipse(cp.x, cp.y, cp1.x, cp1.y, phi, is_large, sweep, cp2.x, cp2.y);
+                                    if (!ell.rx || !ell.ry)
+                                        runner.lineTo(ell.cx, ell.cy);
+                                    else
+                                        runner.ellipse(ell.cx, ell.cy, ell.rx, ell.ry, ell.phi, ell.sa, ell.ea, ell.ac);
                                     cp.x = cp2.x;
                                     cp.y = cp2.y;
                                     advance();
@@ -1820,8 +1966,8 @@ var curve;
         Path.prototype.arcTo = function (x1, y1, x2, y2, radius) {
             this.$ops.push(function (exec) { return exec.arcTo(x1, y1, x2, y2, radius); });
         };
-        Path.prototype.ellipse = function (x, y, radiusX, radiusY, rotation, startAngle, endAngle, antiClockwise) {
-            this.$ops.push(function (exec) { return exec.ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle, antiClockwise); });
+        Path.prototype.ellipse = function (cx, cy, rx, ry, rotation, startAngle, endAngle, antiClockwise) {
+            this.$ops.push(function (exec) { return exec.ellipse(cx, cy, rx, ry, rotation, startAngle, endAngle, antiClockwise); });
         };
         Path.parse = function (runner, data) {
             var parser = curve.parse.getParser();
@@ -1865,8 +2011,10 @@ var curve;
         };
         Serializer.prototype.arcTo = function (x1, y1, x2, y2, radius) {
         };
-        Serializer.prototype.ellipse = function (x, y, radiusX, radiusY, rotation, startAngle, endAngle, antiClockwise) {
-            console.warn("serialize.ellipse", "Not implemented");
+        Serializer.prototype.ellipse = function (cx, cy, rx, ry, rotation, startAngle, endAngle, antiClockwise) {
+            var earc = curve.ellipticalArc.fromEllipse(cx, cy, rx, ry, rotation, startAngle, endAngle, antiClockwise);
+            earc.phi = earc.phi * 180 / Math.PI;
+            this.prepend().data += "L" + earc.sx + "," + earc.sy + " A" + earc.rx + "," + earc.ry + " " + earc.phi + " " + earc.fa + " " + earc.fs + " " + earc.ex + "," + earc.ey;
         };
         Serializer.prototype.prepend = function () {
             if (this.data)

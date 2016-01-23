@@ -40,9 +40,10 @@ namespace curve {
             // Not represented in svg
         }
 
-        ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, antiClockwise?: boolean) {
-            // Convert to ellipticalArc
-            console.warn("serialize.ellipse", "Not implemented");
+        ellipse(cx: number, cy: number, rx: number, ry: number, rotation: number, startAngle: number, endAngle: number, antiClockwise?: boolean) {
+            var earc = ellipticalArc.fromEllipse(cx, cy, rx, ry, rotation, startAngle, endAngle, antiClockwise);
+            earc.phi = earc.phi * 180 / Math.PI;
+            this.prepend().data += `L${earc.sx},${earc.sy} A${earc.rx},${earc.ry} ${earc.phi} ${earc.fa} ${earc.fs} ${earc.ex},${earc.ey}`;
         }
 
         private prepend(): this {
