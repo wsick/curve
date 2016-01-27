@@ -62,13 +62,13 @@ namespace demo.guide {
         }
     }
 
-    function drawPoint(ctx: CanvasRenderingContext2D, x: number, y: number, color: string) {
+    export function drawPoint(ctx: CanvasRenderingContext2D, x: number, y: number, color: string) {
         ctx.beginPath();
         ctx.fillStyle = color;
         ctx.fillRect(x - 2, y - 2, 4, 4);
     }
 
-    function drawLine(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, color: string) {
+    export function drawLine(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, color: string) {
         ctx.save();
         ctx.beginPath();
         ctx.moveTo(x1, y1);

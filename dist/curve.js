@@ -4,49 +4,6 @@ var curve;
 })(curve || (curve = {}));
 var curve;
 (function (curve) {
-    var proto = CanvasRenderingContext2D.prototype;
-    if (!proto.ellipse) {
-        proto.ellipse = function (x, y, radiusX, radiusY, rotation, startAngle, endAngle, antiClockwise) {
-            this.save();
-            this.translate(x, y);
-            this.rotate(rotation);
-            this.scale(radiusX, radiusY);
-            this.arc(0, 0, 1, startAngle, endAngle, antiClockwise);
-            this.restore();
-        };
-    }
-})(curve || (curve = {}));
-var curve;
-(function (curve) {
-    var proto = CanvasRenderingContext2D.prototype;
-    if (!proto.setFillRule) {
-        proto.setFillRule = function (arg) {
-            this.fillRule = arg;
-        };
-    }
-})(curve || (curve = {}));
-(function (global) {
-    if (typeof global.TextEncoder === "function")
-        return;
-    global.TextEncoder = (function () {
-        function TextEncoder() {
-            Object.defineProperties(this, {
-                "encoding": { value: "utf-8", writable: false }
-            });
-        }
-        TextEncoder.prototype.encode = function (str) {
-            var buf = new ArrayBuffer(str.length);
-            var arr = new Uint8Array(buf);
-            for (var i = 0; i < arr.length; i++) {
-                arr[i] = str.charCodeAt(i);
-            }
-            return arr;
-        };
-        return TextEncoder;
-    })();
-})(this);
-var curve;
-(function (curve) {
     var bounds;
     (function (bounds) {
         var extenders;
@@ -718,234 +675,6 @@ var curve;
 })(curve || (curve = {}));
 var curve;
 (function (curve) {
-    var compiler;
-    (function (compiler_1) {
-        function compile(arg0) {
-            var compiler = PathCompiler.instance;
-            compiler.compiled.length = 0;
-            if (typeof arg0 === "string") {
-                var parser = curve.parse.getParser();
-                parser.parse(compiler, arg0);
-            }
-            else if (typeof arg0.exec === "function") {
-                arg0.exec(compiler);
-            }
-            return compiler.compiled;
-        }
-        compiler_1.compile = compile;
-        var PathCompiler = (function () {
-            function PathCompiler() {
-                this.compiled = [];
-            }
-            PathCompiler.prototype.setFillRule = function (fillRule) {
-                this.compiled.push({ t: CompiledOpType.setFillRule, a: [fillRule] });
-            };
-            PathCompiler.prototype.closePath = function () {
-                this.compiled.push({ t: CompiledOpType.closePath, a: [] });
-            };
-            PathCompiler.prototype.moveTo = function (x, y) {
-                this.compiled.push({ t: CompiledOpType.moveTo, a: [x, y] });
-            };
-            PathCompiler.prototype.lineTo = function (x, y) {
-                this.compiled.push({ t: CompiledOpType.lineTo, a: [x, y] });
-            };
-            PathCompiler.prototype.bezierCurveTo = function (cp1x, cp1y, cp2x, cp2y, x, y) {
-                this.compiled.push({ t: CompiledOpType.bezierCurveTo, a: [cp1x, cp1y, cp2x, cp2y, x, y] });
-            };
-            PathCompiler.prototype.quadraticCurveTo = function (cpx, cpy, x, y) {
-                this.compiled.push({ t: CompiledOpType.quadraticCurveTo, a: [cpx, cpy, x, y] });
-            };
-            PathCompiler.prototype.arc = function (x, y, radius, startAngle, endAngle, anticlockwise) {
-                this.compiled.push({ t: CompiledOpType.arc, a: [x, y, radius, startAngle, endAngle, anticlockwise] });
-            };
-            PathCompiler.prototype.arcTo = function (x1, y1, x2, y2, radius) {
-                this.compiled.push({ t: CompiledOpType.arcTo, a: [x1, y1, x2, y2, radius] });
-            };
-            PathCompiler.prototype.ellipse = function (cx, cy, rx, ry, rotation, startAngle, endAngle, antiClockwise) {
-                this.compiled.push({
-                    t: CompiledOpType.ellipse,
-                    a: [cx, cy, rx, ry, rotation, startAngle, endAngle, antiClockwise]
-                });
-            };
-            PathCompiler.instance = new PathCompiler();
-            return PathCompiler;
-        })();
-    })(compiler = curve.compiler || (curve.compiler = {}));
-})(curve || (curve = {}));
-var curve;
-(function (curve) {
-    var compiler;
-    (function (compiler) {
-        function decompile(runner, compiled) {
-            for (var i = 0; !!compiled && i < compiled.length; i++) {
-                var seg = compiled[i];
-                var typeStr = void 0;
-                if (typeof seg.t !== "number" || !(typeStr = CompiledOpType[seg.t])) {
-                    console.warn("Unknown compiled path command: " + seg.t + ", " + seg.a);
-                    continue;
-                }
-                var func = runner[typeStr];
-                func && func.apply(runner, seg.a);
-            }
-        }
-        compiler.decompile = decompile;
-    })(compiler = curve.compiler || (curve.compiler = {}));
-})(curve || (curve = {}));
-var CompiledOpType;
-(function (CompiledOpType) {
-    CompiledOpType[CompiledOpType["setFillRule"] = 1] = "setFillRule";
-    CompiledOpType[CompiledOpType["closePath"] = 2] = "closePath";
-    CompiledOpType[CompiledOpType["moveTo"] = 3] = "moveTo";
-    CompiledOpType[CompiledOpType["lineTo"] = 4] = "lineTo";
-    CompiledOpType[CompiledOpType["bezierCurveTo"] = 5] = "bezierCurveTo";
-    CompiledOpType[CompiledOpType["quadraticCurveTo"] = 6] = "quadraticCurveTo";
-    CompiledOpType[CompiledOpType["arc"] = 7] = "arc";
-    CompiledOpType[CompiledOpType["arcTo"] = 8] = "arcTo";
-    CompiledOpType[CompiledOpType["ellipse"] = 9] = "ellipse";
-})(CompiledOpType || (CompiledOpType = {}));
-var curve;
-(function (curve) {
-    var ellipticalArc;
-    (function (ellipticalArc) {
-        var vec2 = la.vec2;
-        function fromEllipse(cx, cy, rx, ry, phi, sa, ea, ac) {
-            var ap = vec2.rotate(vec2.create(rx * Math.cos(sa), ry * Math.sin(sa)), phi);
-            ap[0] += cx;
-            ap[1] += cy;
-            var bp = vec2.rotate(vec2.create(rx * Math.cos(ea), ry * Math.sin(ea)), phi);
-            bp[0] += cx;
-            bp[1] += cy;
-            var da = ea - sa;
-            var fa = Math.abs(da) > Math.PI ? 1 : 0;
-            var expac = Math.abs(sa - ea) ? ea < sa : sa > ea;
-            fa = (expac !== ac) ? 1 : 0;
-            var fs = ac === true ? 0 : 1;
-            return {
-                sx: ap[0],
-                sy: ap[1],
-                ex: bp[0],
-                ey: bp[1],
-                fa: fa,
-                fs: fs,
-                rx: rx,
-                ry: ry,
-                phi: phi
-            };
-        }
-        ellipticalArc.fromEllipse = fromEllipse;
-    })(ellipticalArc = curve.ellipticalArc || (curve.ellipticalArc = {}));
-})(curve || (curve = {}));
-var curve;
-(function (curve) {
-    var ellipticalArc;
-    (function (ellipticalArc) {
-        function correctRadii(rx, ry, apx, apy) {
-            rx = Math.abs(rx);
-            ry = Math.abs(ry);
-            var lambda = ((apx * apx) / (rx * rx)) + ((apy * apy) / (ry * ry));
-            if (lambda > 1) {
-                var rl = Math.sqrt(lambda);
-                rx *= rl;
-                ry *= rl;
-            }
-            return [rx, ry];
-        }
-        ellipticalArc.correctRadii = correctRadii;
-    })(ellipticalArc = curve.ellipticalArc || (curve.ellipticalArc = {}));
-})(curve || (curve = {}));
-var curve;
-(function (curve) {
-    var ellipticalArc;
-    (function (ellipticalArc) {
-        var vec2 = la.vec2;
-        var PI2 = 2 * Math.PI;
-        function toEllipse(sx, sy, rx, ry, phi, fa, fs, ex, ey) {
-            if (rx === 0 || ry === 0) {
-                return { cx: ex, cy: ey, rx: rx, ry: ry };
-            }
-            var ap = vec2.create((sx - ex) / 2.0, (sy - ey) / 2.0);
-            vec2.rotate(ap, -phi);
-            _a = ellipticalArc.correctRadii(rx, ry, ap[0], ap[1]), rx = _a[0], ry = _a[1];
-            var rx2 = rx * rx;
-            var ry2 = ry * ry;
-            var apx2 = ap[0] * ap[0];
-            var apy2 = ap[1] * ap[1];
-            var factor = Math.sqrt(((rx2 * ry2) - (rx2 * apy2) - (ry2 * apx2)) / ((rx2 * apy2) + (ry2 * apx2)));
-            if (fa === fs) {
-                factor *= -1;
-            }
-            var cp = vec2.create(rx * ap[1] / ry, -ry * ap[0] / rx);
-            cp[0] *= factor;
-            cp[1] *= factor;
-            var c = vec2.rotate(vec2.clone(cp), phi);
-            c[0] += (sx + ex) / 2.0;
-            c[1] += (sy + ey) / 2.0;
-            var v = vec2.create(1, 0);
-            var u = vec2.create((ap[0] - cp[0]) / rx, (ap[1] - cp[1]) / ry);
-            var sa = vec2.angleBetween(v, u) * signAdjust(v, u);
-            if (sa < 0) {
-                sa += PI2;
-            }
-            v = vec2.create((-ap[0] - cp[0]) / rx, (-ap[1] - cp[1]) / ry);
-            var dt = (vec2.angleBetween(u, v) * signAdjust(u, v)) % PI2;
-            if (fs === 0 && dt > 0) {
-                dt -= PI2;
-            }
-            else if (fs === 1 && dt < 0) {
-                dt += PI2;
-            }
-            var ea = (sa + dt) % PI2;
-            if (ea < 0) {
-                ea += PI2;
-            }
-            var ac = fs === 0;
-            return {
-                cx: c[0],
-                cy: c[1],
-                rx: rx,
-                ry: ry,
-                phi: phi,
-                sa: sa,
-                ea: ea,
-                ac: ac
-            };
-            var _a;
-        }
-        ellipticalArc.toEllipse = toEllipse;
-        function signAdjust(u, v) {
-            return ((u[0] * v[1]) - (u[1] * v[0])) < 0 ? -1 : 1;
-        }
-    })(ellipticalArc = curve.ellipticalArc || (curve.ellipticalArc = {}));
-})(curve || (curve = {}));
-var curve;
-(function (curve) {
-    var parse;
-    (function (parse) {
-        (function (ParseStyles) {
-            ParseStyles[ParseStyles["Dom"] = 1] = "Dom";
-            ParseStyles[ParseStyles["Buffer"] = 2] = "Buffer";
-            ParseStyles[ParseStyles["CharMatching"] = 3] = "CharMatching";
-        })(parse.ParseStyles || (parse.ParseStyles = {}));
-        var ParseStyles = parse.ParseStyles;
-    })(parse = curve.parse || (curve.parse = {}));
-})(curve || (curve = {}));
-var curve;
-(function (curve) {
-    var parse;
-    (function (parse) {
-        parse.style = parse.ParseStyles.CharMatching;
-        function getParser() {
-            if (parse.style === parse.ParseStyles.Buffer)
-                return new parse.buffer.Parser();
-            else if (parse.style === parse.ParseStyles.Dom)
-                return new parse.dom.Parser();
-            return new parse.matching.Parser();
-        }
-        parse.getParser = getParser;
-    })(parse = curve.parse || (curve.parse = {}));
-})(curve || (curve = {}));
-var curve;
-(function (curve) {
     var bounds;
     (function (bounds) {
         var fill;
@@ -1268,6 +997,217 @@ var curve;
 })(curve || (curve = {}));
 var curve;
 (function (curve) {
+    var compiler;
+    (function (compiler_1) {
+        function compile(arg0) {
+            var compiler = PathCompiler.instance;
+            compiler.compiled.length = 0;
+            if (typeof arg0 === "string") {
+                var parser = curve.parse.getParser();
+                parser.parse(compiler, arg0);
+            }
+            else if (typeof arg0.exec === "function") {
+                arg0.exec(compiler);
+            }
+            return compiler.compiled;
+        }
+        compiler_1.compile = compile;
+        var PathCompiler = (function () {
+            function PathCompiler() {
+                this.compiled = [];
+            }
+            PathCompiler.prototype.setFillRule = function (fillRule) {
+                this.compiled.push({ t: CompiledOpType.setFillRule, a: [fillRule] });
+            };
+            PathCompiler.prototype.closePath = function () {
+                this.compiled.push({ t: CompiledOpType.closePath, a: [] });
+            };
+            PathCompiler.prototype.moveTo = function (x, y) {
+                this.compiled.push({ t: CompiledOpType.moveTo, a: [x, y] });
+            };
+            PathCompiler.prototype.lineTo = function (x, y) {
+                this.compiled.push({ t: CompiledOpType.lineTo, a: [x, y] });
+            };
+            PathCompiler.prototype.bezierCurveTo = function (cp1x, cp1y, cp2x, cp2y, x, y) {
+                this.compiled.push({ t: CompiledOpType.bezierCurveTo, a: [cp1x, cp1y, cp2x, cp2y, x, y] });
+            };
+            PathCompiler.prototype.quadraticCurveTo = function (cpx, cpy, x, y) {
+                this.compiled.push({ t: CompiledOpType.quadraticCurveTo, a: [cpx, cpy, x, y] });
+            };
+            PathCompiler.prototype.arc = function (x, y, radius, startAngle, endAngle, anticlockwise) {
+                this.compiled.push({ t: CompiledOpType.arc, a: [x, y, radius, startAngle, endAngle, anticlockwise] });
+            };
+            PathCompiler.prototype.arcTo = function (x1, y1, x2, y2, radius) {
+                this.compiled.push({ t: CompiledOpType.arcTo, a: [x1, y1, x2, y2, radius] });
+            };
+            PathCompiler.prototype.ellipse = function (cx, cy, rx, ry, rotation, startAngle, endAngle, antiClockwise) {
+                this.compiled.push({
+                    t: CompiledOpType.ellipse,
+                    a: [cx, cy, rx, ry, rotation, startAngle, endAngle, antiClockwise]
+                });
+            };
+            PathCompiler.instance = new PathCompiler();
+            return PathCompiler;
+        })();
+    })(compiler = curve.compiler || (curve.compiler = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
+    var compiler;
+    (function (compiler) {
+        function decompile(runner, compiled) {
+            for (var i = 0; !!compiled && i < compiled.length; i++) {
+                var seg = compiled[i];
+                var typeStr = void 0;
+                if (typeof seg.t !== "number" || !(typeStr = CompiledOpType[seg.t])) {
+                    console.warn("Unknown compiled path command: " + seg.t + ", " + seg.a);
+                    continue;
+                }
+                var func = runner[typeStr];
+                func && func.apply(runner, seg.a);
+            }
+        }
+        compiler.decompile = decompile;
+    })(compiler = curve.compiler || (curve.compiler = {}));
+})(curve || (curve = {}));
+var CompiledOpType;
+(function (CompiledOpType) {
+    CompiledOpType[CompiledOpType["setFillRule"] = 1] = "setFillRule";
+    CompiledOpType[CompiledOpType["closePath"] = 2] = "closePath";
+    CompiledOpType[CompiledOpType["moveTo"] = 3] = "moveTo";
+    CompiledOpType[CompiledOpType["lineTo"] = 4] = "lineTo";
+    CompiledOpType[CompiledOpType["bezierCurveTo"] = 5] = "bezierCurveTo";
+    CompiledOpType[CompiledOpType["quadraticCurveTo"] = 6] = "quadraticCurveTo";
+    CompiledOpType[CompiledOpType["arc"] = 7] = "arc";
+    CompiledOpType[CompiledOpType["arcTo"] = 8] = "arcTo";
+    CompiledOpType[CompiledOpType["ellipse"] = 9] = "ellipse";
+})(CompiledOpType || (CompiledOpType = {}));
+var curve;
+(function (curve) {
+    var ellipticalArc;
+    (function (ellipticalArc) {
+        var vec2 = la.vec2;
+        function fromEllipse(cx, cy, rx, ry, phi, sa, ea, ac) {
+            var ap = vec2.rotate(vec2.create(rx * Math.cos(sa), ry * Math.sin(sa)), phi);
+            ap[0] += cx;
+            ap[1] += cy;
+            var bp = vec2.rotate(vec2.create(rx * Math.cos(ea), ry * Math.sin(ea)), phi);
+            bp[0] += cx;
+            bp[1] += cy;
+            var da = ea - sa;
+            var fa = Math.abs(da) > Math.PI ? 1 : 0;
+            var expac = Math.abs(sa - ea) ? ea < sa : sa > ea;
+            fa = (expac !== ac) ? 1 : 0;
+            var fs = ac === true ? 0 : 1;
+            return {
+                sx: ap[0],
+                sy: ap[1],
+                ex: bp[0],
+                ey: bp[1],
+                fa: fa,
+                fs: fs,
+                rx: rx,
+                ry: ry,
+                phi: phi
+            };
+        }
+        ellipticalArc.fromEllipse = fromEllipse;
+    })(ellipticalArc = curve.ellipticalArc || (curve.ellipticalArc = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
+    var ellipticalArc;
+    (function (ellipticalArc) {
+        function correctRadii(rx, ry, apx, apy) {
+            rx = Math.abs(rx);
+            ry = Math.abs(ry);
+            var lambda = ((apx * apx) / (rx * rx)) + ((apy * apy) / (ry * ry));
+            if (lambda > 1) {
+                var rl = Math.sqrt(lambda);
+                rx *= rl;
+                ry *= rl;
+            }
+            return [rx, ry];
+        }
+        ellipticalArc.correctRadii = correctRadii;
+    })(ellipticalArc = curve.ellipticalArc || (curve.ellipticalArc = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
+    var ellipticalArc;
+    (function (ellipticalArc) {
+        var vec2 = la.vec2;
+        var PI2 = 2 * Math.PI;
+        function toEllipse(sx, sy, rx, ry, phi, fa, fs, ex, ey) {
+            if (rx === 0 || ry === 0) {
+                return { cx: ex, cy: ey, rx: rx, ry: ry };
+            }
+            var ap = vec2.create((sx - ex) / 2.0, (sy - ey) / 2.0);
+            vec2.rotate(ap, -phi);
+            _a = ellipticalArc.correctRadii(rx, ry, ap[0], ap[1]), rx = _a[0], ry = _a[1];
+            var rx2 = rx * rx;
+            var ry2 = ry * ry;
+            var apx2 = ap[0] * ap[0];
+            var apy2 = ap[1] * ap[1];
+            var factor = Math.sqrt(((rx2 * ry2) - (rx2 * apy2) - (ry2 * apx2)) / ((rx2 * apy2) + (ry2 * apx2)));
+            if (fa === fs) {
+                factor *= -1;
+            }
+            var cp = vec2.create(rx * ap[1] / ry, -ry * ap[0] / rx);
+            cp[0] *= factor;
+            cp[1] *= factor;
+            var c = vec2.rotate(vec2.clone(cp), phi);
+            c[0] += (sx + ex) / 2.0;
+            c[1] += (sy + ey) / 2.0;
+            var v = vec2.create(1, 0);
+            var u = vec2.create((ap[0] - cp[0]) / rx, (ap[1] - cp[1]) / ry);
+            var sa = vec2.angleBetween(v, u) * signAdjust(v, u);
+            if (sa < 0) {
+                sa += PI2;
+            }
+            v = vec2.create((-ap[0] - cp[0]) / rx, (-ap[1] - cp[1]) / ry);
+            var dt = (vec2.angleBetween(u, v) * signAdjust(u, v)) % PI2;
+            if (fs === 0 && dt > 0) {
+                dt -= PI2;
+            }
+            else if (fs === 1 && dt < 0) {
+                dt += PI2;
+            }
+            var ea = (sa + dt) % PI2;
+            if (ea < 0) {
+                ea += PI2;
+            }
+            var ac = fs === 0;
+            return {
+                cx: c[0],
+                cy: c[1],
+                rx: rx,
+                ry: ry,
+                phi: phi,
+                sa: sa,
+                ea: ea,
+                ac: ac
+            };
+            var _a;
+        }
+        ellipticalArc.toEllipse = toEllipse;
+        function signAdjust(u, v) {
+            return ((u[0] * v[1]) - (u[1] * v[0])) < 0 ? -1 : 1;
+        }
+    })(ellipticalArc = curve.ellipticalArc || (curve.ellipticalArc = {}));
+})(curve || (curve = {}));
+var FillRule;
+(function (FillRule) {
+    FillRule[FillRule["EvenOdd"] = 0] = "EvenOdd";
+    FillRule[FillRule["NonZero"] = 1] = "NonZero";
+})(FillRule || (FillRule = {}));
+var SweepDirection;
+(function (SweepDirection) {
+    SweepDirection[SweepDirection["Counterclockwise"] = 0] = "Counterclockwise";
+    SweepDirection[SweepDirection["Clockwise"] = 1] = "Clockwise";
+})(SweepDirection || (SweepDirection = {}));
+var curve;
+(function (curve) {
     var parse;
     (function (parse) {
         var buffer;
@@ -1522,6 +1462,33 @@ var curve;
                 console.warn("Smooth quadratic", "Not implemented");
             }
         })(dom = parse.dom || (parse.dom = {}));
+    })(parse = curve.parse || (curve.parse = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
+    var parse;
+    (function (parse) {
+        (function (ParseStyles) {
+            ParseStyles[ParseStyles["Dom"] = 1] = "Dom";
+            ParseStyles[ParseStyles["Buffer"] = 2] = "Buffer";
+            ParseStyles[ParseStyles["CharMatching"] = 3] = "CharMatching";
+        })(parse.ParseStyles || (parse.ParseStyles = {}));
+        var ParseStyles = parse.ParseStyles;
+    })(parse = curve.parse || (curve.parse = {}));
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
+    var parse;
+    (function (parse) {
+        parse.style = parse.ParseStyles.CharMatching;
+        function getParser() {
+            if (parse.style === parse.ParseStyles.Buffer)
+                return new parse.buffer.Parser();
+            else if (parse.style === parse.ParseStyles.Dom)
+                return new parse.dom.Parser();
+            return new parse.matching.Parser();
+        }
+        parse.getParser = getParser;
     })(parse = curve.parse || (curve.parse = {}));
 })(curve || (curve = {}));
 var curve;
@@ -1904,16 +1871,6 @@ var curve;
         })(matching = parse_1.matching || (parse_1.matching = {}));
     })(parse = curve.parse || (curve.parse = {}));
 })(curve || (curve = {}));
-var FillRule;
-(function (FillRule) {
-    FillRule[FillRule["EvenOdd"] = 0] = "EvenOdd";
-    FillRule[FillRule["NonZero"] = 1] = "NonZero";
-})(FillRule || (FillRule = {}));
-var SweepDirection;
-(function (SweepDirection) {
-    SweepDirection[SweepDirection["Counterclockwise"] = 0] = "Counterclockwise";
-    SweepDirection[SweepDirection["Clockwise"] = 1] = "Clockwise";
-})(SweepDirection || (SweepDirection = {}));
 var curve;
 (function (curve) {
     var Path = (function () {
@@ -1977,6 +1934,49 @@ var curve;
     })();
     curve.Path = Path;
 })(curve || (curve = {}));
+var curve;
+(function (curve) {
+    var proto = CanvasRenderingContext2D.prototype;
+    if (!proto.ellipse) {
+        proto.ellipse = function (x, y, radiusX, radiusY, rotation, startAngle, endAngle, antiClockwise) {
+            this.save();
+            this.translate(x, y);
+            this.rotate(rotation);
+            this.scale(radiusX, radiusY);
+            this.arc(0, 0, 1, startAngle, endAngle, antiClockwise);
+            this.restore();
+        };
+    }
+})(curve || (curve = {}));
+var curve;
+(function (curve) {
+    var proto = CanvasRenderingContext2D.prototype;
+    if (!proto.setFillRule) {
+        proto.setFillRule = function (arg) {
+            this.fillRule = arg;
+        };
+    }
+})(curve || (curve = {}));
+(function (global) {
+    if (typeof global.TextEncoder === "function")
+        return;
+    global.TextEncoder = (function () {
+        function TextEncoder() {
+            Object.defineProperties(this, {
+                "encoding": { value: "utf-8", writable: false }
+            });
+        }
+        TextEncoder.prototype.encode = function (str) {
+            var buf = new ArrayBuffer(str.length);
+            var arr = new Uint8Array(buf);
+            for (var i = 0; i < arr.length; i++) {
+                arr[i] = str.charCodeAt(i);
+            }
+            return arr;
+        };
+        return TextEncoder;
+    })();
+})(this);
 var curve;
 (function (curve) {
     function serialize(path) {

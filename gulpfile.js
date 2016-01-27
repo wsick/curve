@@ -1,17 +1,18 @@
 var fs = require('fs'),
+    path = require('path'),
     gulp = require('gulp'),
+    glob = require('glob'),
     taskListing = require('gulp-task-listing'),
     typings = require('bower-typings'),
     allTypings = typings(),
     name = 'curve',
     meta = {
         name: name,
-        src: [
+        src: rel([
             'typings/*.d.ts',
             'src/_version.ts',
-            'src/polyfills/**/*.ts',
             'src/**/*.ts'
-        ].concat(typings({includeSelf: false})),
+        ].concat(typings({includeSelf: false}))),
         scaffolds: [
             {
                 name: 'test',
@@ -51,6 +52,12 @@ var fs = require('fs'),
     };
 
 gulp.task('help', taskListing);
+
+function rel(patterns) {
+    return patterns
+        .reduce((prev, cur) => prev.concat(glob.sync(cur)), [])
+        .map(file => path.resolve(file));
+}
 
 fs.readdirSync('./gulp')
     .forEach(function (file) {
