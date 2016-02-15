@@ -3,7 +3,7 @@ interface TextEncoder {
     encoding: string;
 }
 declare var TextEncoder: {
-    prototpye: TextEncoder;
+    prototype: TextEncoder;
     new(): TextEncoder;
 };
 

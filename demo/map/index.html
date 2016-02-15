@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+<head>
+    <script src="../lib/la/dist/la.js"></script>
+    <script src="../lib/curve/dist/curve.js"></script>
+    <script src="map.js"></script>
+    <script type="text/javascript">
+        function init() {
+            var canvas = document.getElementById('canvas');
+            canvas.width = document.body.clientWidth;
+            canvas.height = 900;
+            var ctx = canvas.getContext('2d');
+            var start = performance.now();
+            ctx.save();
+            ctx.scale(1 / 8, 1 / 8);
+            demo.map.draw(ctx);
+            ctx.restore();
+            var end = performance.now();
+            console.log(end - start);
+        }
+    </script>
+</head>
+<body onload="init()">
+<canvas id="canvas" style="margin-top: 5px; border: solid gray 1px;">
+
+</canvas>
+</body>
+</html>

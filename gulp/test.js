@@ -17,9 +17,9 @@ module.exports = function (meta) {
             .pipe(ts({
                 target: 'ES5',
                 declaration: true,
-                pathFilter: {'test/tests': 'tests'}
+                pathFilter: {'test': ''}
             }))
-            .pipe(sourcemaps.write({sourceRoot: './src'}))
+            .pipe(sourcemaps.write('./', {sourceRoot: '/', debug: true}))
             .pipe(gulp.dest('test/.build'));
     });
 

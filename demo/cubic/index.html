@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+<head>
+    <script src="../lib/la/dist/la.js"></script>
+    <script src="../lib/curve/dist/curve.js"></script>
+    <script src="../utils.js"></script>
+    <script src="../Dragger.js"></script>
+    <script src="../Timeline.js"></script>
+    <script src="../Mover.js"></script>
+    <script src="../InteractiveDemo.js"></script>
+    <script src="../BezierGrabber.js"></script>
+    <script src="CubicDemo.js"></script>
+    <script type="text/javascript">
+        var d;
+        function init() {
+            var canvas = document.getElementById('canvas');
+            canvas.width = 800;
+            canvas.height = 600;
+            d = new demo.cubic.CubicDemo()
+                    .init(canvas, document.getElementById('timeline'), document.getElementById('timeline-filled'))
+                    .run();
+        }
+        function onCurveToggle() {
+            d.toggleCurve();
+        }
+        function onGuideToggle() {
+            d.toggleGuide();
+        }
+        function onTimelineToggle() {
+            d.toggleTimeline();
+        }
+    </script>
+</head>
+<body onload="init()">
+<div style="display: inline;">
+    <label><input type="checkbox" onchange="onCurveToggle()"/>Show Curve</label>
+    <label><input type="checkbox" onchange="onGuideToggle()"/>Show Guide</label>
+    <label><input type="checkbox" onchange="onTimelineToggle()"/>Show Timeline</label>
+</div>
+<br/>
+<canvas id="canvas" style="margin-top: 5px; border: solid gray 1px;">
+
+</canvas>
+<div id="timeline" style="width: 800px; height: 60px; border: solid gray 1px;">
+    <div id="timeline-filled" style="width: 1px; height: 60px; background-color: gray;"></div>
+</div>
+</body>
+</html>

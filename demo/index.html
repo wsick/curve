@@ -2,92 +2,12 @@
 <html>
 <head>
     <meta charset='UTF-8'/>
-    <title>Demo</title>
-    <script src="lib/la/dist/la.js"></script>
-    <script src="lib/curve/dist/curve.js"></script>
-    <script src="manage.js"></script>
-    <script src="create.js"></script>
-    <script src="stroke.js"></script>
-    <script src="guide.js"></script>
-    <script src="bounds.js"></script>
-    <script src="random.js"></script>
-    <script type="text/javascript">
-        function init() {
-            var canvas = document.getElementById('canvas');
-            canvas.width = 800;
-            canvas.height = 600;
-            demo.setCanvas(canvas);
-            demo.setDataInput(document.getElementById('data'));
-            demo.setBoundsInput(document.getElementById('bounds'));
-            demo.run();
-        }
-        function onTypeChanged(e) {
-            var el = (e || window.event).srcElement;
-            demo.create.setType(el.value);
-            demo.run();
-        }
-        function onThicknessChanged(e) {
-            var el = (e || window.event).srcElement;
-            var val = parseFloat(el.value) || 0;
-            demo.stroke.pars.strokeThickness = Math.max(val, 1);
-            demo.clear();
-            demo.draw();
-        }
-        function onCapChanged(e) {
-            var el = (e || window.event).srcElement;
-            var cap = parseFloat(el.value) || 0;
-            demo.stroke.pars.strokeStartLineCap = cap;
-            demo.clear();
-            demo.draw();
-        }
-        function onLineJoinChanged(e) {
-            var el = (e || window.event).srcElement;
-            var join = parseFloat(el.value) || 0;
-            demo.stroke.pars.strokeLineJoin = join;
-            demo.clear();
-            demo.draw();
-        }
-        function again() {
-            demo.run();
-        }
-    </script>
+    <title>Demos</title>
 </head>
-<body onload="init()">
-<div>
-    <button onclick="again()">again</button>
-    <span>Type</span>
-    <select id="type" onchange="onTypeChanged()">
-        <option value="0">Line</option>
-        <option value="1">Quadratic Bezier</option>
-        <option value="2">Cubic Bezier</option>
-        <option value="3">Ellipse</option>
-        <option value="4">Multi</option>
-    </select>
-    <span>Thickness</span>
-    <input type="number" min="1" max="50" step="1" value="5" onchange="onThicknessChanged()"
-           onkeyup="onThicknessChanged()"/>
-    <span>Line Cap</span>
-    <select onchange="onCapChanged()">
-        <option value="0">Flat</option>
-        <option value="1">Square</option>
-        <option value="2">Round</option>
-    </select>
-    <span>Line Join</span>
-    <select onchange="onLineJoinChanged()">
-        <option value="0">Miter</option>
-        <option value="1">Bevel</option>
-        <option value="2">Round</option>
-    </select>
-</div>
-<div>
-    <canvas id="canvas" style="margin-top: 5px; border: solid gray 1px;">
-    </canvas>
-</div>
-<div>
-    <input id="data" type="text" readonly="readonly" style="width: 800px;" />
-</div>
-<div>
-    <input id="bounds" type="text" readonly="readonly" style="width: 800px;" />
-</div>
+<body>
+<li><a href="bounding/index.html">bounding</a></li>
+<li><a href="map/index.html">map</a></li>
+<li><a href="quadratic/index.html">quadratic bezier</a></li>
+<li><a href="cubic/index.html">cubic bezier</a></li>
 </body>
 </html>
