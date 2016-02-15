@@ -19,6 +19,7 @@ namespace demo {
         protected $canvas: HTMLCanvasElement;
         protected $timeline = new Timeline();
         protected $mover = new Mover();
+        private $show = [false, false, false];
 
         get grabber() {
             return null;
@@ -49,6 +50,21 @@ namespace demo {
             return this;
         }
 
+        toggleCurve() {
+            this.$show[0] = !this.$show[0];
+            this.run();
+        }
+
+        toggleGuide() {
+            this.$show[1] = !this.$show[1];
+            this.run();
+        }
+
+        toggleTimeline() {
+            this.$show[2] = !this.$show[2];
+            this.run();
+        }
+
         run = () => {
             return this.build()
                 .clear()
@@ -67,9 +83,14 @@ namespace demo {
 
         draw(): this {
             var ctx = this.$canvas.getContext('2d');
-            return this.drawCurve(ctx)
-                .drawGuide(ctx)
-                .drawTimeline(ctx, this.$timeline.getTime());
+            var show = this.$show;
+            if (show[0])
+                this.drawCurve(ctx);
+            if (show[1])
+                this.drawGuide(ctx);
+            if (show[2])
+                this.drawTimeline(ctx, this.$timeline.getTime());
+            return this;
         }
 
         drawCurve(ctx: CanvasRenderingContext2D): this {

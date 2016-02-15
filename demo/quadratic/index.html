@@ -11,17 +11,33 @@
     <script src="../BezierGrabber.js"></script>
     <script src="QuadraticDemo.js"></script>
     <script type="text/javascript">
+        var d;
         function init() {
             var canvas = document.getElementById('canvas');
             canvas.width = 800;
             canvas.height = 600;
-            new demo.quadratic.QuadraticDemo()
+            d = new demo.quadratic.QuadraticDemo()
                     .init(canvas, document.getElementById('timeline'), document.getElementById('timeline-filled'))
                     .run();
+        }
+        function onCurveToggle() {
+            d.toggleCurve();
+        }
+        function onGuideToggle() {
+            d.toggleGuide();
+        }
+        function onTimelineToggle() {
+            d.toggleTimeline();
         }
     </script>
 </head>
 <body onload="init()">
+<div style="display: inline;">
+    <label><input type="checkbox" onchange="onCurveToggle()"/>Show Curve</label>
+    <label><input type="checkbox" onchange="onGuideToggle()"/>Show Guide</label>
+    <label><input type="checkbox" onchange="onTimelineToggle()"/>Show Timeline</label>
+</div>
+<br/>
 <canvas id="canvas" style="margin-top: 5px; border: solid gray 1px;">
 
 </canvas>
