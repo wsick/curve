@@ -1,6 +1,7 @@
 namespace demo {
     import vec2 = la.vec2;
     import fromEllipse = curve.ellipticalArc.fromEllipse;
+    import IBoundingBox = curve.bounds.IBoundingBox;
     var colors = {
         start: "rgba(0,   255,   0, 0.8)",
         control: "rgba(255, 106,   0, 0.8)",
@@ -17,18 +18,20 @@ namespace demo {
 
     export class InteractiveDemo {
         protected $canvas: HTMLCanvasElement;
+        protected $data: HTMLDivElement;
         protected $timeline = new Timeline();
         protected $mover = new Mover();
-        private $show = [false, false, false];
+        private $show = [false, false, false, false];
 
         get grabber() {
             return null;
         }
 
-        init(canvas: HTMLCanvasElement, box: HTMLDivElement, filler: HTMLDivElement): this {
+        init(canvas: HTMLCanvasElement, box: HTMLDivElement, filler: HTMLDivElement, data: HTMLDivElement): this {
             return this.initCanvas(canvas)
                 .initTimeline(box, filler)
-                .initMover(canvas);
+                .initMover(canvas)
+                .initData(data);
         }
 
         protected initCanvas(canvas: HTMLCanvasElement): this {
@@ -37,6 +40,8 @@ namespace demo {
         }
 
         protected initTimeline(box: HTMLDivElement, filler: HTMLDivElement): this {
+            if (!box || !filler)
+                return this;
             this.$timeline
                 .init(box, filler)
                 .onRun(this.run);
@@ -47,6 +52,11 @@ namespace demo {
             this.$mover
                 .init(canvas, this.grabber)
                 .onRun(this.run);
+            return this;
+        }
+
+        protected initData(data: HTMLDivElement): this {
+            this.$data = data;
             return this;
         }
 
@@ -65,13 +75,24 @@ namespace demo {
             this.run();
         }
 
+        toggleBounds() {
+            this.$show[3] = !this.$show[3];
+            this.run();
+        }
+
         run = () => {
             return this.build()
+                .updateData()
                 .clear()
                 .draw();
         };
 
         build(): this {
+            return this;
+        }
+
+        updateData(): this {
+            this.$data.innerText = this.serialize();
             return this;
         }
 
@@ -90,6 +111,8 @@ namespace demo {
                 this.drawGuide(ctx);
             if (show[2])
                 this.drawTimeline(ctx, this.$timeline.getTime());
+            if (show[3])
+                this.drawBounds(ctx);
             return this;
         }
 
@@ -102,6 +125,10 @@ namespace demo {
         }
 
         drawTimeline(ctx: CanvasRenderingContext2D, t: number): this {
+            return this;
+        }
+
+        drawBounds(ctx: CanvasRenderingContext2D): this {
             return this;
         }
 
@@ -118,29 +145,29 @@ namespace demo {
 
         protected drawSegment(ctx: CanvasRenderingContext2D, cur: ICompiledSegment, last: number[]): number[] {
             if (cur.t === CompiledOpType.moveTo) {
-                this.drawPoint(ctx, cur.a[0], cur.a[1], colors.start);
+                this.drawGrabPoint(ctx, cur.a[0], cur.a[1], colors.start);
                 return [cur.a[0], cur.a[1]];
             } else if (cur.t === CompiledOpType.lineTo) {
-                this.drawPoint(ctx, cur.a[0], cur.a[1], colors.end);
+                this.drawGrabPoint(ctx, cur.a[0], cur.a[1], colors.end);
                 return [cur.a[0], cur.a[1]];
             } else if (cur.t === CompiledOpType.quadraticCurveTo) {
                 this.drawLine(ctx, last[0], last[1], cur.a[0], cur.a[1], colors.control)
-                    .drawPoint(ctx, cur.a[0], cur.a[1], colors.control)
+                    .drawGrabPoint(ctx, cur.a[0], cur.a[1], colors.control)
                     .drawLine(ctx, cur.a[0], cur.a[1], cur.a[2], cur.a[3], colors.control)
-                    .drawPoint(ctx, cur.a[2], cur.a[3], colors.end);
+                    .drawGrabPoint(ctx, cur.a[2], cur.a[3], colors.end);
                 return [cur.a[2], cur.a[3]];
             } else if (cur.t === CompiledOpType.bezierCurveTo) {
                 this.drawLine(ctx, last[0], last[1], cur.a[0], cur.a[1], colors.control)
-                    .drawPoint(ctx, cur.a[0], cur.a[1], colors.control)
+                    .drawGrabPoint(ctx, cur.a[0], cur.a[1], colors.control)
                     .drawLine(ctx, cur.a[0], cur.a[1], cur.a[2], cur.a[3], colors.control)
-                    .drawPoint(ctx, cur.a[2], cur.a[3], colors.control)
+                    .drawGrabPoint(ctx, cur.a[2], cur.a[3], colors.control)
                     .drawLine(ctx, cur.a[2], cur.a[3], cur.a[4], cur.a[5], colors.control)
-                    .drawPoint(ctx, cur.a[4], cur.a[5], colors.end);
+                    .drawGrabPoint(ctx, cur.a[4], cur.a[5], colors.end);
                 return [cur.a[4], cur.a[5]];
             } else if (cur.t === CompiledOpType.ellipse) {
                 var earc = fromEllipse(cur.a[0], cur.a[1], cur.a[2], cur.a[3], cur.a[4], cur.a[5], cur.a[6], cur.a[7]);
                 this.drawEllipse(ctx, cur.a[0], cur.a[1], cur.a[2], cur.a[3], cur.a[4], colors.control)
-                    .drawPoint(ctx, earc.ex, earc.ey, colors.end)
+                    .drawGrabPoint(ctx, earc.ex, earc.ey, colors.end)
                     .drawEllipseLines(ctx, cur.a[0], cur.a[1], cur.a[2], cur.a[3], cur.a[4])
                     .drawEllipseExtrema(ctx, cur.a, colors.end);
                 return [earc.ex, earc.ey];
@@ -161,8 +188,18 @@ namespace demo {
 
         protected drawPoint(ctx: CanvasRenderingContext2D, x: number, y: number, color: string): this {
             ctx.beginPath();
+            ctx.arc(x, y, 4, 0, 2 * Math.PI);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            return this;
+        }
+
+        protected drawGrabPoint(ctx: CanvasRenderingContext2D, x: number, y: number, color: string): this {
+            ctx.beginPath();
+            ctx.arc(x, y, 3, 0, 2 * Math.PI);
             ctx.fillStyle = color;
-            ctx.fillRect(x - 2, y - 2, 4, 4);
+            ctx.fill();
             return this;
         }
 
@@ -194,9 +231,26 @@ namespace demo {
             var util = la.ellipse(args[0], args[1], args[2], args[3], args[4]);
             for (var i = 0, ext = util.extrema(0, 2 * Math.PI, args[7]); i < ext.length; i++) {
                 let p = ext[i];
-                this.drawPoint(ctx, p[0], p[1], color)
+                if (p)
+                    this.drawPoint(ctx, p[0], p[1], color)
             }
             return this;
+        }
+
+        protected drawBoundingBox(ctx: CanvasRenderingContext2D, box: IBoundingBox): this {
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(box.l, box.t, box.r - box.l, box.b - box.t);
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = "rgba(255,0,0,0.7)";
+            ctx.setLineDash([10, 5]);
+            ctx.stroke();
+            ctx.restore();
+            return this;
+        }
+
+        serialize(): string {
+            return "";
         }
     }
 }

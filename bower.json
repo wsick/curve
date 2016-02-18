@@ -32,6 +32,6 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "la": "~0.2.1"
+    "la": "~0.2.2"
   }
 }

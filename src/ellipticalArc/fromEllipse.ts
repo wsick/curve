@@ -51,7 +51,7 @@ namespace curve.ellipticalArc {
         // Compute fA
         var fa = Math.abs(da) > Math.PI ? 1 : 0;
         var expac = Math.abs(sa - ea) ? ea < sa : sa > ea;
-        fa = (expac !== ac) ? 1 : 0;
+        fa = (expac !== ac) ? 1 - fa : fa;
 
         // F.6.4.4
         // Compute fS

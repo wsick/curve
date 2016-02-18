@@ -3,6 +3,42 @@
 <head>
     <meta charset='UTF-8'/>
     <title>Demo</title>
+    <style type="text/css">
+        body, html, div {
+            margin: 0;
+        }
+
+        body {
+            background: #EBEBEB;
+            font-family: 'Roboto Slab', georgia;
+            font-size: 25px;
+            font-weight: 300;
+            -webkit-font-smoothing: antialiased;
+            text-align: center;
+        }
+
+        select {
+            font-family: 'Roboto Slab', georgia;
+        }
+
+        .example {
+            width: 800px;
+            margin: 50px auto;
+            background: white;
+            border-radius: 3px;
+            box-shadow: 0 1px 3px 0px rgba(0, 0, 0, 0.2);
+        }
+
+        .example h1 {
+            padding: 15px 0;
+            font-size: 16px;
+            margin: 0;
+            background: #575B66;
+            color: white;
+            font-weight: 200;
+            border-radius: 3px 3px 0 0;
+        }
+    </style>
     <script src="../lib/la/dist/la.js"></script>
     <script src="../lib/curve/dist/curve.js"></script>
     <script src="manage.js"></script>
@@ -14,8 +50,6 @@
     <script type="text/javascript">
         function init() {
             var canvas = document.getElementById('canvas');
-            canvas.width = 800;
-            canvas.height = 600;
             demo.setCanvas(canvas);
             demo.setDataInput(document.getElementById('data'));
             demo.setBoundsInput(document.getElementById('bounds'));
@@ -53,41 +87,37 @@
     </script>
 </head>
 <body onload="init()">
-<div>
-    <button onclick="again()">again</button>
-    <span>Type</span>
-    <select id="type" onchange="onTypeChanged()">
-        <option value="0">Line</option>
-        <option value="1">Quadratic Bezier</option>
-        <option value="2">Cubic Bezier</option>
-        <option value="3">Ellipse</option>
-        <option value="4">Multi</option>
-    </select>
-    <span>Thickness</span>
-    <input type="number" min="1" max="50" step="1" value="5" onchange="onThicknessChanged()"
-           onkeyup="onThicknessChanged()"/>
-    <span>Line Cap</span>
-    <select onchange="onCapChanged()">
-        <option value="0">Flat</option>
-        <option value="1">Square</option>
-        <option value="2">Round</option>
-    </select>
-    <span>Line Join</span>
-    <select onchange="onLineJoinChanged()">
-        <option value="0">Miter</option>
-        <option value="1">Bevel</option>
-        <option value="2">Round</option>
-    </select>
-</div>
-<div>
-    <canvas id="canvas" style="margin-top: 5px; border: solid gray 1px;">
+<div class="example">
+    <h1>
+        <button onclick="again()">again</button>
+        <span>Type</span>
+        <select id="type" onchange="onTypeChanged()">
+            <option value="0">Line</option>
+            <option value="1">Quadratic Bezier</option>
+            <option value="2">Cubic Bezier</option>
+            <option value="3">Ellipse</option>
+            <option value="4">Multi</option>
+        </select>
+        <span>Thickness</span>
+        <input type="number" min="1" max="50" step="1" value="5" onchange="onThicknessChanged()"
+               onkeyup="onThicknessChanged()"/>
+        <span>Line Cap</span>
+        <select onchange="onCapChanged()">
+            <option value="0">Flat</option>
+            <option value="1">Square</option>
+            <option value="2">Round</option>
+        </select>
+        <span>Line Join</span>
+        <select onchange="onLineJoinChanged()">
+            <option value="0">Miter</option>
+            <option value="1">Bevel</option>
+            <option value="2">Round</option>
+        </select>
+    </h1>
+    <canvas id="canvas" width="800" height="600">
     </canvas>
-</div>
-<div>
-    <input id="data" type="text" readonly="readonly" style="width: 800px;" />
-</div>
-<div>
-    <input id="bounds" type="text" readonly="readonly" style="width: 800px;" />
+    <input id="data" type="text" readonly="readonly" style="border-width: 0px; width: 800px;"/>
+    <input id="bounds" type="text" readonly="readonly" style="border-width: 0px; width: 800px;"/>
 </div>
 </body>
 </html>

@@ -6,7 +6,7 @@ namespace demo.quadratic {
         private $p0: Float32Array;
         private $p1: Float32Array;
         private $p2: Float32Array;
-        private $grabber = new BezierGrabber();
+        private $grabber = new PointsGrabber();
 
         get grabber(): IGrabeable {
             return this.$grabber;
@@ -31,11 +31,13 @@ namespace demo.quadratic {
         }
 
         drawCurve(ctx: CanvasRenderingContext2D): this {
+            ctx.save();
             ctx.beginPath();
             this.$curve.draw(ctx);
-            ctx.lineWidth = 5;
+            ctx.lineWidth = 10;
             ctx.strokeStyle = "rgba(0,0,0,0.6)";
             ctx.stroke();
+            ctx.restore();
             return this;
         }
 
@@ -51,9 +53,29 @@ namespace demo.quadratic {
                 .drawPoint(ctx, lp1[0], lp1[1], "blue")
                 .drawLine(ctx, lp0[0], lp0[1], lp1[0], lp1[1], "blue");
 
-            this.drawPoint(ctx, fp[0], fp[1], "blue");
+            this.drawPoint(ctx, fp[0], fp[1], "black");
 
             return this;
+        }
+
+        drawBounds(ctx: CanvasRenderingContext2D): this {
+            var b = new curve.bounds.stroke.StrokeBounds(this.$curve);
+            b.pars = {
+                strokeThickness: 10,
+                strokeDashArray: [],
+                strokeDashCap: curve.PenLineCap.Flat,
+                strokeDashOffset: 0,
+                strokeEndLineCap: curve.PenLineCap.Flat,
+                strokeLineJoin: curve.PenLineJoin.Miter,
+                strokeMiterLimit: 10,
+                strokeStartLineCap: curve.PenLineCap.Flat
+            };
+            b.ensure();
+            return this.drawBoundingBox(ctx, b);
+        }
+
+        serialize(): string {
+            return curve.serialize(this.$curve, true);
         }
     }
 }
