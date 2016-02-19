@@ -1,10 +1,14 @@
 namespace demo {
     const GRAB_RADIUS = 8;
 
-    export class BezierGrabber implements IGrabeable {
+    export class PointsGrabber implements IGrabeable {
         private $points = [];
         private $last = la.vec2.create(0, 0);
         private $index = -1;
+
+        get lastIndex(): number {
+            return this.$index;
+        }
 
         setPoints(points: Float32Array[]) {
             this.$points = points;

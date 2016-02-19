@@ -1,7 +1,7 @@
 {
   "name": "curve",
   "description": "Canvas Graphics Library",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "ignore": [
     "gulp",
     "stress",
@@ -32,6 +32,6 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "la": "~0.2.1"
+    "la": "~0.2.2"
   }
 }

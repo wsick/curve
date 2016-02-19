@@ -345,5 +345,5 @@ declare var TextEncoder: {
     new (): TextEncoder;
 };
 declare namespace curve {
-    function serialize(path: Path): string;
+    function serialize(path: Path, pretty?: boolean): string;
 }

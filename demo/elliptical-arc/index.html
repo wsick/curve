@@ -33,21 +33,9 @@
             border-radius: 3px 3px 0 0;
         }
 
-        .data {
-
-        }
-
-        .timeline {
-            cursor: pointer;
-            width: 800px;
-            height: 80px;
-        }
-
-        .timeline-filler {
-            width: 0px;
-            height: 80px;
-            background-color: gray;
-            opacity: 0.5;
+        .options {
+            display: inline;
+            font-size: 14px;
         }
     </style>
     <script src="../lib/la/dist/la.js"></script>
@@ -58,16 +46,13 @@
     <script src="../Mover.js"></script>
     <script src="../InteractiveDemo.js"></script>
     <script src="../PointsGrabber.js"></script>
-    <script src="QuadraticDemo.js"></script>
+    <script src="EllipticalArcDemo.js"></script>
     <script type="text/javascript">
         var d;
         function init() {
             var canvas = document.getElementById('canvas');
-            d = new demo.quadratic.QuadraticDemo()
-                    .init(canvas,
-                            document.getElementById('timeline'),
-                            document.getElementById('timeline-filler'),
-                            document.getElementById('data'))
+            d = new demo.ellipticalArc.EllipticalArcDemo()
+                    .init(canvas, null, null, document.getElementById('data'))
                     .run();
         }
         function onCurveToggle() {
@@ -79,8 +64,11 @@
         function onBoundsToggle() {
             d.toggleBounds();
         }
-        function onTimelineToggle() {
-            d.toggleTimeline();
+        function onLargeArcChanged() {
+            d.toggleLargeArc();
+        }
+        function onClockwiseChanged() {
+            d.toggleSweepDirection();
         }
     </script>
 </head>
@@ -91,14 +79,14 @@
         <label><input type="checkbox" onchange="onCurveToggle()"/>Show Curve</label>
         <label><input type="checkbox" onchange="onGuideToggle()"/>Show Guide</label>
         <label><input type="checkbox" onchange="onBoundsToggle()"/>Show Bounds</label>
-        <label><input type="checkbox" onchange="onTimelineToggle()"/>Show Timeline</label>
     </h1>
     <canvas id="canvas" width="800" height="600">
     </canvas>
     <div id="data" class="data">
     </div>
-    <div id="timeline" class="timeline">
-        <div id="timeline-filler" class="timeline-filler"></div>
+    <div class="options">
+        <label><input type="checkbox" onchange="onLargeArcChanged()"/>Large Arc</label></label>
+        <label><input type="checkbox" onchange="onClockwiseChanged()"/>Clockwise</label></label>
     </div>
 </div>
 </body>

@@ -1,6 +1,6 @@
 var curve;
 (function (curve) {
-    curve.version = '0.1.1';
+    curve.version = '0.1.2';
 })(curve || (curve = {}));
 var curve;
 (function (curve) {
@@ -1097,7 +1097,7 @@ var curve;
             var da = ea - sa;
             var fa = Math.abs(da) > Math.PI ? 1 : 0;
             var expac = Math.abs(sa - ea) ? ea < sa : sa > ea;
-            fa = (expac !== ac) ? 1 : 0;
+            fa = (expac !== ac) ? 1 - fa : fa;
             var fs = ac === true ? 0 : 1;
             return {
                 sx: ap[0],
@@ -1979,15 +1979,16 @@ var curve;
 })(this);
 var curve;
 (function (curve) {
-    function serialize(path) {
-        var serializer = new Serializer();
+    function serialize(path, pretty) {
+        var serializer = new Serializer(pretty);
         path.exec(serializer);
         return serializer.data;
     }
     curve.serialize = serialize;
     var Serializer = (function () {
-        function Serializer() {
+        function Serializer(pretty) {
             this.data = "";
+            this.pretty = pretty === true;
         }
         Serializer.prototype.setFillRule = function (fillRule) {
             this.prepend().data += "F" + fillRule;
@@ -1996,16 +1997,42 @@ var curve;
             this.prepend().data += "Z";
         };
         Serializer.prototype.moveTo = function (x, y) {
+            if (this.pretty) {
+                x = round(x, 2);
+                y = round(y, 2);
+            }
             this.prepend().data += "M" + x + "," + y;
+            this.prev = { x: x, y: y };
         };
         Serializer.prototype.lineTo = function (x, y) {
+            if (this.pretty) {
+                x = round(x, 2);
+                y = round(y, 2);
+            }
             this.prepend().data += "L" + x + "," + y;
+            this.prev = { x: x, y: y };
         };
         Serializer.prototype.bezierCurveTo = function (cp1x, cp1y, cp2x, cp2y, x, y) {
+            if (this.pretty) {
+                cp1x = round(cp1x, 2);
+                cp1y = round(cp1y, 2);
+                cp2x = round(cp2x, 2);
+                cp2y = round(cp2y, 2);
+                x = round(x, 2);
+                y = round(y, 2);
+            }
             this.prepend().data += "C" + cp1x + "," + cp1y + "," + cp2x + "," + cp2y + "," + x + "," + y;
+            this.prev = { x: x, y: y };
         };
         Serializer.prototype.quadraticCurveTo = function (cpx, cpy, x, y) {
+            if (this.pretty) {
+                cpx = round(cpx, 2);
+                cpy = round(cpy, 2);
+                x = round(x, 2);
+                y = round(y, 2);
+            }
             this.prepend().data += "Q" + cpx + "," + cpy + "," + x + "," + y;
+            this.prev = { x: x, y: y };
         };
         Serializer.prototype.arc = function (x, y, radius, startAngle, endAngle, anticlockwise) {
         };
@@ -2014,7 +2041,19 @@ var curve;
         Serializer.prototype.ellipse = function (cx, cy, rx, ry, rotation, startAngle, endAngle, antiClockwise) {
             var earc = curve.ellipticalArc.fromEllipse(cx, cy, rx, ry, rotation, startAngle, endAngle, antiClockwise);
             earc.phi = earc.phi * 180 / Math.PI;
-            this.prepend().data += "L" + earc.sx + "," + earc.sy + " A" + earc.rx + "," + earc.ry + " " + earc.phi + " " + earc.fa + " " + earc.fs + " " + earc.ex + "," + earc.ey;
+            if (this.pretty) {
+                earc.sx = round(earc.sx, 2);
+                earc.sy = round(earc.sy, 2);
+                earc.rx = round(earc.rx, 2);
+                earc.ry = round(earc.ry, 2);
+                earc.phi = round(earc.phi, 2);
+                earc.ex = round(earc.ex, 2);
+                earc.ey = round(earc.ey, 2);
+            }
+            if (this.prev && close(this.prev.x, earc.sx) && close(this.prev.y, earc.sy))
+                this.prepend().data += "A" + earc.rx + "," + earc.ry + " " + earc.phi + " " + earc.fa + " " + earc.fs + " " + earc.ex + "," + earc.ey;
+            else
+                this.prepend().data += "L" + earc.sx + "," + earc.sy + " A" + earc.rx + "," + earc.ry + " " + earc.phi + " " + earc.fa + " " + earc.fs + " " + earc.ex + "," + earc.ey;
         };
         Serializer.prototype.prepend = function () {
             if (this.data)
@@ -2023,6 +2062,14 @@ var curve;
         };
         return Serializer;
     })();
+    var EPSILON = 1e-4;
+    function close(a, b) {
+        return Math.abs(a - b) < EPSILON;
+    }
+    function round(a, digits) {
+        var factor = Math.pow(10, digits);
+        return Math.round(a * factor) / factor;
+    }
 })(curve || (curve = {}));
 
 //# sourceMappingURL=curve.js.map
