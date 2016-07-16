@@ -17,6 +17,14 @@ namespace curve {
             }
         }
 
+        get isEmpty() {
+            return this.$ops.length < 1;
+        }
+
+        reset() {
+            this.$ops.length = 0;
+        }
+
         exec(runner: ISegmentRunner, step?: Function) {
             for (var ops = this.$ops, i = 0; ops && i < ops.length; i++) {
                 ops[i](runner);

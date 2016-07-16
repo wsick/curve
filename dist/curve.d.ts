@@ -316,6 +316,8 @@ declare namespace curve {
         constructor(path: Path);
         constructor(d: string);
         constructor(compiled: ICompiledSegment[]);
+        isEmpty: boolean;
+        reset(): void;
         exec(runner: ISegmentRunner, step?: Function): void;
         draw(ctx: CanvasRenderingContext2D): void;
         addPath(path: Path): void;

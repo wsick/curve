@@ -1,6 +1,6 @@
 var curve;
 (function (curve) {
-    curve.version = '0.1.3';
+    curve.version = '0.1.4';
 })(curve || (curve = {}));
 var curve;
 (function (curve) {
@@ -1895,6 +1895,16 @@ var curve;
                 parser.parse(this, arg0);
             }
         }
+        Object.defineProperty(Path.prototype, "isEmpty", {
+            get: function () {
+                return this.$ops.length < 1;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Path.prototype.reset = function () {
+            this.$ops.length = 0;
+        };
         Path.prototype.exec = function (runner, step) {
             for (var ops = this.$ops, i = 0; ops && i < ops.length; i++) {
                 ops[i](runner);
