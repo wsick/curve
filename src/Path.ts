@@ -10,7 +10,7 @@ namespace curve {
             if (arg0 instanceof Path) {
                 arg0.exec(this);
             } else if (Array.isArray(arg0)) {
-                new compiler.decompile(this, arg0);
+                new compiler.decompile(this, <ICompiledSegment[]>arg0);
             } else if (typeof arg0 === "string") {
                 var parser = parse.getParser();
                 parser.parse(this, arg0);
