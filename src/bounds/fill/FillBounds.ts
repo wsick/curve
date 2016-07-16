@@ -14,6 +14,11 @@ namespace curve.bounds.fill {
             });
         }
 
+        reset() {
+            this.$calc = false;
+            this.l = this.t = this.r = this.b = 0;
+        }
+
         ensure(): this {
             if (!this.$calc)
                 this.calculate();

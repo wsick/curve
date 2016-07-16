@@ -129,6 +129,7 @@ declare namespace curve.bounds.fill {
         b: number;
         private $calc;
         constructor(path: Path);
+        reset(): void;
         ensure(): this;
         calculate(): this;
     }
@@ -189,6 +190,7 @@ declare namespace curve.bounds.stroke {
         b: number;
         private $calc;
         constructor(path: Path);
+        reset(): void;
         ensure(): this;
         calculate(): this;
     }

@@ -1,6 +1,6 @@
 var curve;
 (function (curve) {
-    curve.version = '0.1.2';
+    curve.version = '0.1.3';
 })(curve || (curve = {}));
 var curve;
 (function (curve) {
@@ -690,6 +690,10 @@ var curve;
                         "path": { value: path, writable: false }
                     });
                 }
+                FillBounds.prototype.reset = function () {
+                    this.$calc = false;
+                    this.l = this.t = this.r = this.b = 0;
+                };
                 FillBounds.prototype.ensure = function () {
                     if (!this.$calc)
                         this.calculate();
@@ -953,6 +957,10 @@ var curve;
                         "path": { value: path, writable: false }
                     });
                 }
+                StrokeBounds.prototype.reset = function () {
+                    this.$calc = false;
+                    this.l = this.t = this.r = this.b = 0;
+                };
                 StrokeBounds.prototype.ensure = function () {
                     if (!this.$calc)
                         this.calculate();
